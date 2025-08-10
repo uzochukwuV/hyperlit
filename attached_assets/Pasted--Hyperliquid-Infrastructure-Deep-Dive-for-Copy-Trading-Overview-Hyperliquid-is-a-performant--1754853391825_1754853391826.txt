@@ -1,0 +1,389 @@
+# Hyperliquid Infrastructure Deep Dive for Copy Trading
+
+## Overview
+Hyperliquid is a performant Layer 1 blockchain built for a fully onchain financial system. It consists of two main components: **HyperCore** (margin and matching engine) and **HyperEVM** (general-purpose EVM), both secured by HyperBFT consensus.
+
+---
+
+## 1. Asset IDs & Notation
+
+### Asset ID System
+- **Perpetuals**: Use integer indices from meta info response
+  - Example: BTC = 0 on mainnet
+- **Spot Trading**: Use `10000 + spotInfo["index"]`
+  - Example: PURR/USDC uses asset ID 10000 (spot index 0)
+- **Builder-deployed Perps**: Use `100000 + perp_dex_index * 10000 + index_in_meta`
+  - Format: `{dex}:{coin}` (e.g., test:ABC)
+  - Example: test:ABC on testnet = 110000
+
+### Important Distinctions
+- **Token ID ≠ Spot ID ≠ Asset ID**
+- **HYPE Example**:
+  - Mainnet token ID: 150
+  - Mainnet spot ID: 107
+  - Testnet token ID: 1105
+  - Testnet spot ID: 1035
+
+---
+
+## 2. Tick and Lot Size
+
+### Size Decimals (`szDecimals`)
+- All sizes rounded to `szDecimals` precision
+- Found in meta response from info endpoint
+- Example: If `szDecimals = 3`, then 1.001 is valid but 1.0001 is invalid
+
+### Price Validation
+- Must not exceed maximum significant figures
+- Example: 1234.5 valid, 1234.56 invalid (too many sig figs)
+- Minimum sizes: 0.001234 valid for appropriate precision
+
+---
+
+## 3. Nonces and API Wallets
+
+### Hyperliquid Nonce System
+- **Storage**: 100 highest nonces per address
+- **Requirements**: 
+  - New nonce > smallest stored nonce
+  - Never been used before
+  - Within timeframe: `(T - 2 days, T + 1 day)` where T = unix milliseconds
+
+### API Wallets (Agent Wallets)
+- Master accounts approve API wallets to sign on behalf
+- **Critical**: Use API wallet address for signing, master/sub-account address for querying
+- **Best Practice**: Don't reuse API wallet addresses after deregistration
+- **Nonce Sharing**: Same API wallet = shared nonce tracker across subaccounts
+
+### Copy Trading Implications
+- Use separate API wallets per trading process/user
+- Implement atomic counter for unique nonces
+- Batch orders every ~0.1 seconds
+- Separate batches for IOC/GTC vs ALO orders (ALO prioritized)
+
+---
+
+## 4. Info Endpoint
+
+### Core Data Retrieval
+- **Purpose**: Fetch exchange and user information
+- **Base URL**: `https://api.hyperliquid.xyz/info`
+- **Method**: POST with JSON request bodies
+
+### Key Endpoints for Copy Trading
+- **Meta Info**: Asset details, tick sizes, lot sizes
+- **User State**: Portfolio, positions, open orders
+- **All Mids**: Current market prices
+- **Order Status**: Track order execution
+- **Clearinghouse State**: Overall exchange state
+
+---
+
+## 5. Exchange Endpoint
+
+### Order Execution
+- **Purpose**: Place, modify, cancel orders
+- **Authentication**: Requires signed requests
+- **Asset Format**: 
+  - Perpetuals: Use direct asset index
+  - Spot: Use `10000 + index`
+
+### Copy Trading Integration
+- Monitor leader orders via Info endpoint
+- Execute follower orders via Exchange endpoint
+- Handle position sizing and risk management
+- Batch operations for efficiency
+
+---
+
+## 6. WebSocket API
+
+### Connection Details
+- **Mainnet**: `wss://api.hyperliquid.xyz/ws`
+- **Testnet**: `wss://api.hyperliquid-testnet.xyz/ws`
+
+### Rate Limits
+- **Connections**: Max 100 per IP
+- **Subscriptions**: Max 1000 per IP
+- **Messages**: Max 2000/minute across all connections
+- **Inflight Posts**: Max 100 simultaneous
+
+### Real-time Data Streams
+```typescript
+// Subscribe to trades
+{
+  "method": "subscribe",
+  "subscription": {
+    "type": "trades",
+    "coin": "SOL"
+  }
+}
+
+// User-specific subscriptions
+{
+  "method": "subscribe",
+  "subscription": {
+    "type": "userEvents",
+    "user": "0x..."
+  }
+}
+```
+
+### Copy Trading WebSocket Strategy
+- **Leader Monitoring**: Subscribe to user events for traders being copied
+- **Market Data**: Subscribe to trades, orderbook updates
+- **Execution**: Use WebSocket for low-latency order placement
+- **Connection Management**: Handle reconnections, subscription limits
+
+---
+
+## 7. Error Responses
+
+### Common Error Patterns
+- **Rate Limiting**: HTTP 429, implement exponential backoff
+- **Invalid Assets**: Check asset ID calculations
+- **Nonce Issues**: Ensure proper nonce management
+- **Insufficient Balance**: Handle margin requirements
+- **Order Rejection**: Parse specific rejection reasons
+
+---
+
+## 8. Signing
+
+### Request Signing Process
+- Use EIP-712 structured data signing
+- Sign with private key (user) or API wallet
+- Include nonce, timestamp, action data
+- Verify signature server-side
+
+### Copy Trading Security
+- Secure API wallet storage
+- Separate wallets per copy trading instance
+- Implement signature verification
+- Handle wallet rotation/expiry
+
+---
+
+## 9. Rate Limits and User Limits
+
+### IP-Based Limits
+- **REST**: 1200 weight per minute
+- **Exchange Actions**: Weight = `1 + floor(batch_length / 40)`
+- **Info Requests**: Weight 20 (standard), 2 (l2Book, allMids), 60 (userRole)
+
+### Address-Based Limits
+- **Dynamic**: 1 request per 1 USDC traded cumulatively
+- **Initial Buffer**: 10,000 requests
+- **Rate Limited**: 1 request per 10 seconds
+- **Cancel Buffer**: `min(limit + 100000, limit * 2)`
+
+### Open Order Limits
+- **Base**: 1000 orders
+- **Volume Bonus**: +1 order per 5M USDC volume
+- **Maximum**: 5000 orders total
+
+---
+
+## 10. Optimizing Latency
+
+### Best Practices
+- **Geographic Proximity**: Deploy near Hyperliquid servers
+- **WebSocket Usage**: Lower latency than REST
+- **Batching**: Group operations efficiently
+- **Connection Pooling**: Reuse connections
+- **Async Processing**: Non-blocking operations
+
+### Copy Trading Optimizations
+- Real-time leader monitoring via WebSocket
+- Parallel follower execution
+- Smart order routing based on market conditions
+- Predictive position sizing
+
+---
+
+## 11. Bridge2
+
+### Cross-Chain Infrastructure
+- **Purpose**: Bridge between Hyperliquid and Arbitrum
+- **Contract**: `0x2df1c51e09aecf9cacb7bc98cb1742757f163df7`
+- **Consensus**: 2/3 validator approval required
+- **Process**: 
+  - Deposits: Signed by validators when >2/3 approve
+  - Withdrawals: Immediate L1 deduction, validator signatures enable withdrawal
+
+### Copy Trading Applications
+- Cross-chain capital efficiency
+- Arbitrage opportunities
+- Multi-chain portfolio management
+
+---
+
+## 12. HIP-1, HIP-2, HIP-3 Assets
+
+### Asset Deployment Standards
+- **HIP-1**: Basic token standard
+- **HIP-2**: Enhanced token features
+- **HIP-3**: Advanced deployer actions and governance
+
+### Copy Trading Integration
+- Support for custom tokens in copy strategies
+- Handle new asset listings dynamically
+- Manage asset-specific parameters
+
+---
+
+## 13. HyperEVM Architecture
+
+### Dual-Block System
+- **Fast Blocks**: 2-second intervals, 2M gas limit
+- **Slow Blocks**: 1-minute intervals, 30M gas limit
+- **Motivation**: Decouple block speed from block size
+- **Developer Control**: `{"type": "evmUserModify", "usingBigBlocks": true}`
+
+### Copy Trading Benefits
+- Fast blocks: Quick order execution and updates
+- Slow blocks: Complex strategy deployments
+- Flexible gas pricing: `bigBlockGasPrice` for cost optimization
+
+---
+
+## 14. Raw HyperEVM Block Data
+
+### Block Structure
+- Interleaved fast/slow blocks with increasing EVM block numbers
+- System transactions from HyperCore interactions
+- Custom endpoints: `eth_getSystemTxsByBlockHash/Number`
+
+### Copy Trading Data Mining
+- Track all trading activity across blocks
+- Analyze system transactions for arbitrage
+- Historical performance verification
+
+---
+
+## 15. HyperCore ↔ HyperEVM Interaction
+
+### Unified Architecture
+- **Direct Interaction**: HyperEVM can directly access HyperCore
+- **Order Book Access**: Smart contracts can interact with spot/perp books
+- **Shared Security**: Both secured by HyperBFT consensus
+
+### Copy Trading Opportunities
+- On-chain strategy verification
+- Automated rebalancing via smart contracts
+- Transparent performance tracking
+- Decentralized copy trading protocols
+
+---
+
+## 16. HyperCore ↔ HyperEVM Transfers
+
+### Asset Movement
+- Seamless transfers between Core and EVM
+- Maintain unified balance tracking
+- Enable complex DeFi integrations
+
+### Copy Trading Features
+- Dynamic capital allocation
+- Cross-layer arbitrage
+- Yield optimization strategies
+
+---
+
+## 17. Interaction Timings
+
+### Block Production
+- **Fast Blocks**: Every 2 seconds
+- **Slow Blocks**: Every 60 seconds
+- **Deterministic**: Based on `l1_block_time % duration`
+
+### Copy Trading Timing
+- Sub-second leader trade detection
+- <2 second follower execution (fast blocks)
+- Batch optimization for cost efficiency
+
+---
+
+## 18. Wrapped HYPE
+
+### Token Mechanics
+- EVM-compatible version of native HYPE
+- Enables DeFi integrations on HyperEVM
+- Maintains 1:1 backing with native HYPE
+
+### Copy Trading Applications
+- Collateral for leveraged copy strategies
+- Fee payment in smart contracts
+- Yield farming integration
+
+---
+
+## 19. JSON-RPC Integration
+
+### Available Methods
+Standard Ethereum JSON-RPC plus custom methods:
+- `eth_bigBlockGasPrice`: Gas pricing for slow blocks
+- `eth_getSystemTxsByBlockHash/Number`: HyperCore system transactions
+
+### Limitations
+- **Historical State**: Not supported (use archive nodes)
+- **Block Queries**: Only latest block for most calls
+- **Log Queries**: Max 4 topics, 50 block range
+
+### Copy Trading JSON-RPC Strategy
+```typescript
+// Real-time balance monitoring
+await provider.getBalance(traderAddress)
+
+// Transaction simulation
+await provider.estimateGas(copyTradeTransaction)
+
+// Block monitoring for system transactions
+await provider.getBlockWithTransactions(blockNumber)
+
+// Custom gas pricing
+const bigBlockGasPrice = await provider.send('eth_bigBlockGasPrice', [])
+```
+
+---
+
+## Copy Trading Architecture Recommendations
+
+### 1. Multi-Layer Monitoring
+- **WebSocket**: Real-time leader activity monitoring
+- **JSON-RPC**: Balance and state verification
+- **Info API**: Portfolio and position tracking
+
+### 2. Execution Pipeline
+```
+Leader Trade Detection (WebSocket)
+↓
+Risk Assessment (Info API)
+↓
+Position Sizing Calculation
+↓
+Follower Order Execution (Exchange API)
+↓
+Confirmation & Tracking (WebSocket)
+```
+
+### 3. Technical Stack
+- **Backend**: Node.js/Python with WebSocket connections
+- **Smart Contracts**: HyperEVM for automated execution
+- **Database**: Real-time position and P&L tracking
+- **Frontend**: React dashboard for followers
+
+### 4. Key Challenges & Solutions
+- **Latency**: Use WebSocket + geographic optimization
+- **Rate Limits**: Implement intelligent batching and queuing
+- **Nonce Management**: Atomic counters per API wallet
+- **Risk Management**: Real-time portfolio monitoring
+- **Scale**: Handle multiple leaders and thousands of followers
+
+### 5. Competitive Advantages
+- **On-chain Transparency**: Verifiable track records
+- **Low Fees**: Makes micro-copying profitable  
+- **Unified Platform**: Spot + perps + DeFi integration
+- **Real-time Execution**: Sub-second copying capability
+
+This infrastructure provides everything needed to build a sophisticated, low-latency copy trading platform that could be a winning hackathon submission and valuable ecosystem addition.

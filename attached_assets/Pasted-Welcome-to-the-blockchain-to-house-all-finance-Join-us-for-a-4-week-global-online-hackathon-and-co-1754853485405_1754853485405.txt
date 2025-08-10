@@ -1,0 +1,134 @@
+Welcome to the blockchain to house all finance
+Join us for a 4-week, global online hackathon and compete for $250,000 in prizes as we build the future of finance.
+
+Thanks to our Sponsors.
+
+
+🧭 Tracks & Bounties
+Choose from three core tracks:
+
+🛠️ Public Goods Track
+
+Build open and reusable tools, infrastructure, and resources that benefit the entire Hyperliquid ecosystem. Think: SDKs, indexers, educational materials, or anything that empowers others to build better.
+
+All code submitted as part of this track must be open source.
+
+Projects will be judged on their Quality, Usefulness to the Ecosystem, and the Documentation & Reusability.
+
+🚀 Hyperliquid Frontier Track
+
+Grow the Hyperliquid ecosystem: technically, socially, and culturally. Build dApps, create integrations, rally communities, spark memes, launch creative content, or start cultural movements. Whether you're coding or creating, this is what it means to be on the frontier.
+
+Projects will be judged on their Quality and Ecosystem Impact.
+
+🧪 Precompiles + CoreWriter Exploration Track
+
+Push the boundaries of what's possible across HyperCore and HyperEVM. Unlock new use cases, performance gains, and mechanisms only possible with precompiles and corewriter. Interacting with HyperCore
+
+Projects will be judged on their Quality, Novelty, and Technicality.
+
+
+
+Each of the core tracks offers 1st, 2nd, and 3rd place prizes:
+
+🥇 1st: $30,000
+🥈 2nd: $15,000
+🥉 3rd: $5,000
+
+
+Additionally, projects can opt into any of the following bounties:
+
+HyperEVM Transaction Simulator – $30,000
+Improvements to the HyperEVM RPC - $20,000
+Best use of GlueX Router API– $7,000
+Best use of Liquid Labs - $7,000
+Best use of Privy - $5,000
+LIFI Hackathon Bounty - $5,000
+Shielded TWAP Order Executor - $5,000
+Token Vesting System – $5,000
+Hyperliquid SDK in other languages - $3,000
+Notification System using Node Info API - $3,000
+Core<>EVM Arbitrage Bot - $2,500
+Hyperliquid SDK in other languages - $2,500
+HyperEVM Stablecoin tracking dashboard - $2,500
+Best showcase of identity with Hyperliquid Names (.hl) - $2,000
+Best use of GoldRush - $2,000
+Best use of Goldsky - $2,000
+Best use of HyperDrive - $2,000
+HyperCore Liquidator Bot - $2,000
+Best use of Alchemy - $1,500 + $10k credits
+Advanced, Adaptive Execution Layer - $1,000
+
+
+Find more details about each bounty here: Categories.
+
+
+
+🧾 Payout Info
+Prizes are paid in USDC or USDT on Hyperliquid.
+All winners must complete KYC/KYB before receiving prizes.
+
+
+📅 Timeline 
+All times in PDT (UTC -7)
+
+July 28: Registration opens & kickoff call
+Kickoff call - Recording | Slides
+August 20: Demo day
+Demo day - 10:00: <link>
+Demo day - 18:00: <link>
+August 22: Closing ceremony
+Closing ceremony: <link>
+August 24: Project submission deadline
+September 5: Winners announced
+Join us for a series of hands-on workshops throughout the event.
+
+
+👩‍⚖️ Judges
+Projects will be reviewed by our panel of judges:
+
+Judges will be revealed soon
+
+
+🧑‍💼 Growth Partners
+In addition to the prize pool, hackathon winners will get access to our growth partners—a network of VCs, lawyers, software architects, go-to-market strategists, and other domain experts. Many teams use a hackathon win as a launchpad to raise funding, refine their product, and continue building. Growth partners help streamline that path by offering mentorship, advice, and support after the event without any expectation of compensation or equity.
+
+Our Growth Partners network includes (but not limited to): a16z, Ambush Capital, Anagram Ventures, Airfoil, Flowdesk, Framework, Manifold, Motus, Prelude, Superform, Theo.
+
+
+
+📜 Rules
+Projects must align with at least one of the three core tracks.
+
+Projects may choose to opt into any number of bounties.
+
+Projects must align with the values of Hyperliquid.
+
+All submissions must include a demo and provide the judges access to any relevant material (e.g. code, writeup, documentation, assets).
+
+Projects must be submitted by the deadline to be considered.
+
+All winners must pass KYC/KYB to receive their prize.
+
+
+
+❓Frequently Asked Questions
+Can my project participate?
+Yes! Any new or existing project can be submitted. The only requirement is that you build something new during the hackathon that is aligned with one of the core tracks.
+
+
+
+How many Tracks/Bounties can I compete in?
+Every project must compete in one of the core tracks. Projects can additionally opt into competing for any number of bounties.
+
+
+
+IP ownership
+All code submitted as part of the 🛠️ Public Goods Track must be open source. 
+
+All other submissions can be closed source, as long as you give HL-Hackathon access to the relevant code for judging. You retain all IP rights and ownership.
+
+
+
+How many projects can I join or submit?
+Each participant can join up to 3 projects.
