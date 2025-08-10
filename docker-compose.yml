@@ -1,0 +1,172 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database with TimescaleDB extension
+  postgres:
+    image: timescale/timescaledb-ha:pg15-latest
+    environment:
+      POSTGRES_DB: copytrading
+      POSTGRES_USER: ${PGUSER:-postgres}
+      POSTGRES_PASSWORD: ${PGPASSWORD:-password}
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PGUSER:-postgres} -d copytrading"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hyperliquid-network
+
+  # Redis for caching and message queuing
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hyperliquid-network
+
+  # Go Copy Trading Engine
+  copy-engine:
+    build:
+      context: .
+      dockerfile: Dockerfile.go
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgres://${PGUSER:-postgres}:${PGPASSWORD:-password}@postgres:5432/copytrading?sslmode=disable
+      - REDIS_URL=redis://redis:6379
+      - HYPERLIQUID_API_URL=https://api.hyperliquid.xyz
+      - HYPERLIQUID_TESTNET_URL=https://api.hyperliquid-testnet.xyz
+      - HYPERLIQUID_WS_URL=wss://api.hyperliquid.xyz/ws
+      - HYPERLIQUID_TESTNET_WS_URL=wss://api.hyperliquid-testnet.xyz/ws
+      - PYTHON_ANALYTICS_URL=http://analytics:8001
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - API_WALLET_PRIVATE_KEY=${API_WALLET_PRIVATE_KEY}
+      - MAX_FOLLOWERS_PER_LEADER=${MAX_FOLLOWERS_PER_LEADER:-100}
+      - DEFAULT_RISK_PERCENTAGE=${DEFAULT_RISK_PERCENTAGE:-0.02}
+      - MAX_ORDER_BATCH_SIZE=${MAX_ORDER_BATCH_SIZE:-50}
+      - ORDER_BATCH_INTERVAL_MS=${ORDER_BATCH_INTERVAL_MS:-100}
+      - MAX_POSITION_SIZE=${MAX_POSITION_SIZE:-100000.0}
+      - MAX_WEBSOCKET_CONNECTIONS=${MAX_WEBSOCKET_CONNECTIONS:-90}
+      - MAX_API_REQUESTS_PER_MINUTE=${MAX_API_REQUESTS_PER_MINUTE:-1000}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    volumes:
+      - ./frontend:/app/frontend:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - hyperliquid-network
+
+  # Python Analytics Service
+  analytics:
+    build:
+      context: ./analytics
+      dockerfile: ../Dockerfile.python
+    ports:
+      - "8001:8001"
+    environment:
+      - DATABASE_URL=postgres://${PGUSER:-postgres}:${PGPASSWORD:-password}@postgres:5432/copytrading?sslmode=disable
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - HOST=0.0.0.0
+      - PORT=8001
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - hyperliquid-network
+
+  # Nginx reverse proxy (optional for production)
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - copy-engine
+      - analytics
+    restart: unless-stopped
+    networks:
+      - hyperliquid-network
+    profiles:
+      - production
+
+  # Prometheus for metrics (optional)
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    networks:
+      - hyperliquid-network
+    profiles:
+      - monitoring
+
+  # Grafana for dashboards (optional)
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    depends_on:
+      - prometheus
+    networks:
+      - hyperliquid-network
+    profiles:
+      - monitoring
+
+networks:
+  hyperliquid-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local

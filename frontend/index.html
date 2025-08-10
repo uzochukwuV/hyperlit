@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hyperliquid Copy Trading</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-chart-line me-2"></i>
+                Hyperliquid Copy Trading
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#dashboard" data-section="dashboard">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#leaders" data-section="leaders">
+                            <i class="fas fa-crown"></i> Leaders
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#followers" data-section="followers">
+                            <i class="fas fa-users"></i> My Follows
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#trades" data-section="trades">
+                            <i class="fas fa-exchange-alt"></i> Trades
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#analytics" data-section="analytics">
+                            <i class="fas fa-chart-bar"></i> Analytics
+                        </a>
+                    </li>
+                </ul>
+                
+                <div class="navbar-nav">
+                    <div class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle"></i> Account
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#settings"><i class="fas fa-cog"></i> Settings</a></li>
+                            <li><a class="dropdown-item" href="#wallet"><i class="fas fa-wallet"></i> Wallet</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#logout"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container-fluid mt-5 pt-3">
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="content-section">
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h2><i class="fas fa-tachometer-alt text-primary"></i> Dashboard</h2>
+                </div>
+            </div>
+
+            <!-- System Status -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card status-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="card-title text-muted">System Status</h6>
+                                    <h4 id="system-status" class="text-success">
+                                        <i class="fas fa-circle"></i> Online
+                                    </h4>
+                                </div>
+                                <div class="status-icon">
+                                    <i class="fas fa-server fa-2x text-success"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="card status-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="card-title text-muted">Active Follows</h6>
+                                    <h4 id="active-follows">0</h4>
+                                </div>
+                                <div class="status-icon">
+                                    <i class="fas fa-users fa-2x text-info"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="card status-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="card-title text-muted">Total P&L (30d)</h6>
+                                    <h4 id="total-pnl" class="text-success">$0.00</h4>
+                                </div>
+                                <div class="status-icon">
+                                    <i class="fas fa-chart-line fa-2x text-success"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="card status-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="card-title text-muted">Success Rate</h6>
+                                    <h4 id="success-rate">0%</h4>
+                                </div>
+                                <div class="status-icon">
+                                    <i class="fas fa-percentage fa-2x text-warning"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="row mb-4">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-chart-area"></i> Portfolio Performance</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="portfolioChart" height="100"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-pie-chart"></i> Asset Allocation</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="allocationChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-clock"></i> Recent Activity</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Time</th>
+                                            <th>Type</th>
+                                            <th>Leader</th>
+                                            <th>Asset</th>
+                                            <th>Side</th>
+                                            <th>Size</th>
+                                            <th>Price</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="recent-activity">
+                                        <tr>
+                                            <td colspan="8" class="text-center text-muted">
+                                                <i class="fas fa-spinner fa-spin"></i> Loading...
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Leaders Section -->
+        <section id="leaders" class="content-section d-none">
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h2><i class="fas fa-crown text-warning"></i> Top Leaders</h2>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="row mb-4">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <label class="form-label">Time Period</label>
+                                    <select class="form-select" id="period-filter">
+                                        <option value="7">7 Days</option>
+                                        <option value="30" selected>30 Days</option>
+                                        <option value="90">90 Days</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Min Followers</label>
+                                    <input type="number" class="form-control" id="min-followers" value="5" min="1">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Sort By</label>
+                                    <select class="form-select" id="sort-by">
+                                        <option value="return">Return %</option>
+                                        <option value="sharpe">Sharpe Ratio</option>
+                                        <option value="followers">Followers</option>
+                                        <option value="volume">Volume</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">&nbsp;</label>
+                                    <button class="btn btn-primary w-100" onclick="loadLeaders()">
+                                        <i class="fas fa-search"></i> Search
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Leaders Grid -->
+            <div class="row" id="leaders-grid">
+                <div class="col-12 text-center">
+                    <i class="fas fa-spinner fa-spin fa-2x text-muted"></i>
+                    <p class="text-muted mt-2">Loading leaders...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Followers Section -->
+        <section id="followers" class="content-section d-none">
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <h2><i class="fas fa-users text-info"></i> My Copy Trading</h2>
+                </div>
+                <div class="col-md-4 text-end">
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addFollowerModal">
+                        <i class="fas fa-plus"></i> Add New Follow
+                    </button>
+                </div>
+            </div>
+
+            <!-- Active Follows -->
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-line"></i> Active Copy Trading Positions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Leader</th>
+                                    <th>Copy %</th>
+                                    <th>Max Position</th>
+                                    <th>P&L (30d)</th>
+                                    <th>Win Rate</th>
+                                    <th>Risk Level</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="followers-table">
+                                <tr>
+                                    <td colspan="8" class="text-center text-muted">
+                                        <i class="fas fa-spinner fa-spin"></i> Loading follows...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Trades Section -->
+        <section id="trades" class="content-section d-none">
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h2><i class="fas fa-exchange-alt text-success"></i> Trade History</h2>
+                </div>
+            </div>
+
+            <!-- Trade Filters -->
+            <div class="row mb-4">
+                <div class="col-lg-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">Date Range</label>
+                                    <select class="form-select" id="trade-period">
+                                        <option value="1">Today</option>
+                                        <option value="7">Last 7 Days</option>
+                                        <option value="30" selected>Last 30 Days</option>
+                                        <option value="90">Last 90 Days</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Status</label>
+                                    <select class="form-select" id="trade-status">
+                                        <option value="">All</option>
+                                        <option value="filled">Filled</option>
+                                        <option value="pending">Pending</option>
+                                        <option value="cancelled">Cancelled</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">&nbsp;</label>
+                                    <button class="btn btn-primary w-100" onclick="loadTrades()">
+                                        <i class="fas fa-filter"></i> Filter
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trades Table -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Leader</th>
+                                    <th>Asset</th>
+                                    <th>Side</th>
+                                    <th>Size</th>
+                                    <th>Price</th>
+                                    <th>Value</th>
+                                    <th>P&L</th>
+                                    <th>Status</th>
+                                    <th>Tx</th>
+                                </tr>
+                            </thead>
+                            <tbody id="trades-table">
+                                <tr>
+                                    <td colspan="10" class="text-center text-muted">
+                                        <i class="fas fa-spinner fa-spin"></i> Loading trades...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Analytics Section -->
+        <section id="analytics" class="content-section d-none">
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h2><i class="fas fa-chart-bar text-purple"></i> Advanced Analytics</h2>
+                </div>
+            </div>
+
+            <!-- Analytics Cards -->
+            <div class="row mb-4">
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-brain"></i> AI Recommendations</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="ai-recommendations">
+                                <div class="text-center text-muted">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                    <p class="mt-2">Analyzing patterns...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-chart-line"></i> Performance Metrics</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="performanceChart" height="80"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Risk Analysis -->
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-shield-alt"></i> Risk Analysis</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="riskChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-balance-scale"></i> Portfolio Optimization</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="optimization-results">
+                                <div class="text-center text-muted">
+                                    <i class="fas fa-cog fa-spin"></i>
+                                    <p class="mt-2">Optimizing portfolio...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Add Follower Modal -->
+    <div class="modal fade" id="addFollowerModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-plus"></i> Add New Copy Trading Follow
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addFollowerForm">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Leader Address *</label>
+                                <input type="text" class="form-control" id="leaderAddress" required 
+                                       placeholder="0x..." pattern="^0x[a-fA-F0-9]{40}$">
+                                <div class="form-text">Enter the Ethereum address of the leader to follow</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">API Wallet Address *</label>
+                                <input type="text" class="form-control" id="apiWalletAddress" required 
+                                       placeholder="0x..." pattern="^0x[a-fA-F0-9]{40}$">
+                                <div class="form-text">Your trading wallet address</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">Copy Percentage *</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="copyPercentage" 
+                                           required min="1" max="100" value="10">
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <div class="form-text">Percentage of leader's position size to copy</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">Max Position Size *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" id="maxPositionSize" 
+                                           required min="1" value="1000">
+                                </div>
+                                <div class="form-text">Maximum position size in USD</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">Stop Loss (Optional)</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="stopLoss" 
+                                           min="1" max="99" placeholder="10">
+                                    <span class="input-group-text">%</span>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">Take Profit (Optional)</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="takeProfit" 
+                                           min="1" placeholder="20">
+                                    <span class="input-group-text">%</span>
+                                </div>
+                            </div>
+                            
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="isActive" checked>
+                                    <label class="form-check-label" for="isActive">
+                                        Start copying immediately
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="addFollower()">
+                        <i class="fas fa-plus"></i> Add Follow
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="alertToast" class="toast" role="alert">
+            <div class="toast-header">
+                <strong class="me-auto">Notification</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="toastMessage">
+                <!-- Toast message content -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
