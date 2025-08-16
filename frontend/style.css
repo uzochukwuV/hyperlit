@@ -19,7 +19,7 @@
 
 /* Global Styles */
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: #f8f9fa;
     color: #333;
     line-height: 1.6;
@@ -500,6 +500,325 @@ body {
     z-index: 10;
 }
 
+/* Hyperliquid Section Specific Styles */
+.border-primary {
+    border-color: var(--primary-color) !important;
+}
+
+.border-info {
+    border-color: var(--info-color) !important;
+}
+
+.border-warning {
+    border-color: var(--warning-color) !important;
+}
+
+.border-success {
+    border-color: var(--success-color) !important;
+}
+
+/* Protocol Status Cards */
+.card.border-primary:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 123, 255, 0.15);
+}
+
+.card.border-info:hover {
+    box-shadow: 0 0.5rem 1rem rgba(23, 162, 184, 0.15);
+}
+
+.card.border-warning:hover {
+    box-shadow: 0 0.5rem 1rem rgba(255, 193, 7, 0.15);
+}
+
+.card.border-success:hover {
+    box-shadow: 0 0.5rem 1rem rgba(40, 167, 69, 0.15);
+}
+
+/* Market Data Tables */
+.table-sm th {
+    padding: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.table-sm td {
+    padding: 0.5rem;
+    font-size: 0.875rem;
+}
+
+/* Trending Assets */
+.trending-asset-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    border-bottom: 1px solid #f1f3f4;
+    transition: background-color 0.2s ease;
+}
+
+.trending-asset-item:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+.trending-asset-item:last-child {
+    border-bottom: none;
+}
+
+/* API Integration Status */
+.api-status-item {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 0;
+}
+
+.api-status-item i {
+    width: 20px;
+    text-align: center;
+}
+
+/* List Group Enhancements */
+.list-group-item {
+    border: none;
+    border-bottom: 1px solid #f1f3f4;
+    padding: 1rem;
+}
+
+.list-group-item:last-child {
+    border-bottom: none;
+}
+
+.list-group-flush .list-group-item:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+/* Feature Status Badges */
+.feature-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Protocol Info Alert */
+.alert-info {
+    background-color: rgba(13, 110, 253, 0.1);
+    border-color: rgba(13, 110, 253, 0.2);
+    color: #0c5460;
+}
+
+.alert-info ul {
+    padding-left: 1.5rem;
+}
+
+.alert-info li {
+    margin-bottom: 0.25rem;
+}
+
+/* Market Price Changes */
+.price-positive {
+    color: var(--success-color);
+    font-weight: 600;
+}
+
+.price-negative {
+    color: var(--danger-color);
+    font-weight: 600;
+}
+
+.price-neutral {
+    color: var(--secondary-color);
+    font-weight: 500;
+}
+
+/* Volume Indicators */
+.volume-high {
+    background: linear-gradient(90deg, rgba(40, 167, 69, 0.1) 0%, rgba(40, 167, 69, 0.3) 100%);
+    border-left: 3px solid var(--success-color);
+    padding-left: 0.5rem;
+}
+
+.volume-medium {
+    background: linear-gradient(90deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 193, 7, 0.3) 100%);
+    border-left: 3px solid var(--warning-color);
+    padding-left: 0.5rem;
+}
+
+.volume-low {
+    background: linear-gradient(90deg, rgba(108, 117, 125, 0.1) 0%, rgba(108, 117, 125, 0.3) 100%);
+    border-left: 3px solid var(--secondary-color);
+    padding-left: 0.5rem;
+}
+
+/* Funding Rate Indicators */
+.funding-positive {
+    color: var(--success-color);
+    background-color: rgba(40, 167, 69, 0.1);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-weight: 500;
+}
+
+.funding-negative {
+    color: var(--danger-color);
+    background-color: rgba(220, 53, 69, 0.1);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-weight: 500;
+}
+
+/* Protocol Feature Cards */
+.protocol-feature {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 1px solid #dee2e6;
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    margin-bottom: 1rem;
+    transition: all 0.2s ease-in-out;
+}
+
+.protocol-feature:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--box-shadow-lg);
+}
+
+/* Connection Status Indicators */
+.connection-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 2rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.connection-online {
+    background-color: rgba(40, 167, 69, 0.1);
+    color: var(--success-color);
+    border: 1px solid rgba(40, 167, 69, 0.2);
+}
+
+.connection-offline {
+    background-color: rgba(220, 53, 69, 0.1);
+    color: var(--danger-color);
+    border: 1px solid rgba(220, 53, 69, 0.2);
+}
+
+.connection-warning {
+    background-color: rgba(255, 193, 7, 0.1);
+    color: var(--warning-color);
+    border: 1px solid rgba(255, 193, 7, 0.2);
+}
+
+/* Market Data Refresh Animation */
+@keyframes refreshPulse {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.refresh-spinning {
+    animation: refreshPulse 1s linear infinite;
+}
+
+/* Hyperliquid Brand Colors */
+.hl-primary {
+    color: #4f46e5 !important;
+}
+
+.bg-hl-primary {
+    background-color: #4f46e5 !important;
+}
+
+.border-hl-primary {
+    border-color: #4f46e5 !important;
+}
+
+/* Advanced Order Type Indicators */
+.order-type-limit {
+    background-color: rgba(13, 110, 253, 0.1);
+    color: var(--primary-color);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.order-type-market {
+    background-color: rgba(255, 193, 7, 0.1);
+    color: var(--warning-color);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.order-type-stop {
+    background-color: rgba(220, 53, 69, 0.1);
+    color: var(--danger-color);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.order-type-twap {
+    background-color: rgba(23, 162, 184, 0.1);
+    color: var(--info-color);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* Account Type Indicators */
+.account-main {
+    color: var(--primary-color);
+}
+
+.account-sub {
+    color: var(--info-color);
+}
+
+.account-vault {
+    color: var(--warning-color);
+}
+
+.account-api {
+    color: var(--success-color);
+}
+
+/* Performance Indicators */
+.performance-excellent {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 2rem;
+    font-weight: 600;
+}
+
+.performance-good {
+    background: linear-gradient(135deg, #17a2b8 0%, #007bff 100%);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 2rem;
+    font-weight: 600;
+}
+
+.performance-average {
+    background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 2rem;
+    font-weight: 600;
+}
+
+.performance-poor {
+    background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 2rem;
+    font-weight: 600;
+}
+
 /* Dark Mode Support (if needed) */
 @media (prefers-color-scheme: dark) {
     :root {
@@ -527,5 +846,530 @@ body {
         background-color: var(--card-bg);
         border-color: var(--border-color);
         color: var(--text-color);
+    }
+    
+    .protocol-feature {
+        background: linear-gradient(135deg, #2d3436 0%, #636e72 100%);
+        border-color: var(--border-color);
+    }
+    
+    .alert-info {
+        background-color: rgba(13, 110, 253, 0.2);
+        border-color: rgba(13, 110, 253, 0.3);
+        color: #b3d4fc;
+    }
+}
+
+/* GlueX Router Styles */
+.protocol-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+}
+
+.protocol-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem;
+    border: 1px solid var(--bs-border-color, #dee2e6);
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.protocol-item:hover {
+    border-color: var(--primary-color);
+    background-color: rgba(0, 123, 255, 0.05);
+    transform: translateY(-1px);
+}
+
+.protocol-logo {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: white;
+    font-size: 0.75rem;
+    margin-right: 0.75rem;
+    flex-shrink: 0;
+}
+
+/* Route optimization chart container */
+#routeOptimizationChart {
+    max-height: 200px;
+}
+
+/* Yield performance chart */
+#yieldPerformanceChart {
+    max-height: 250px;
+}
+
+/* Routing analytics chart */
+#routingAnalyticsChart {
+    max-height: 300px;
+}
+
+/* Cross-chain routes table */
+#crosschain-routes .badge {
+    font-size: 0.75rem;
+}
+
+/* Protocol status cards hover effects */
+.card.border-primary:hover,
+.card.border-info:hover,
+.card.border-warning:hover,
+.card.border-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+/* GlueX specific animations */
+.gluex-pulse {
+    animation: gluex-pulse 2s infinite;
+}
+
+@keyframes gluex-pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+/* Router status indicators */
+.router-status-active {
+    color: #28a745;
+    animation: router-blink 1.5s infinite;
+}
+
+@keyframes router-blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0.5; }
+}
+
+/* Optimization settings form styling */
+#gluex .form-select,
+#gluex .form-control {
+    border-radius: 0.5rem;
+    border: 1px solid #dee2e6;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+#gluex .form-select:focus,
+#gluex .form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Protocol integration cards */
+.protocol-integration-card {
+    border: 1px solid #e9ecef;
+    border-radius: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.protocol-integration-card:hover {
+    border-color: #0d6efd;
+    box-shadow: 0 2px 8px rgba(13, 110, 253, 0.15);
+}
+
+/* Yield strategy items */
+.yield-strategy-item {
+    padding: 1rem;
+    border-left: 4px solid #28a745;
+    background: linear-gradient(90deg, rgba(40, 167, 69, 0.1) 0%, transparent 100%);
+    margin-bottom: 0.5rem;
+    border-radius: 0 0.5rem 0.5rem 0;
+}
+
+/* Smart routing analytics */
+.routing-metric {
+    text-align: center;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    margin-bottom: 1rem;
+}
+
+.routing-metric h4 {
+    margin: 0;
+    color: #495057;
+}
+
+.routing-metric small {
+    color: #6c757d;
+    font-weight: 500;
+}
+
+/* Cross-chain badge styling */
+.chain-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Savings indicators */
+.savings-positive {
+    color: #28a745;
+    font-weight: 600;
+}
+
+.savings-negative {
+    color: #dc3545;
+    font-weight: 600;
+}
+
+/* GlueX section specific responsive design */
+@media (max-width: 768px) {
+    .protocol-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .protocol-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
+    }
+    
+    .protocol-logo {
+        margin-right: 0;
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* Loading states for GlueX */
+.gluex-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    color: #6c757d;
+}
+
+.gluex-loading i {
+    margin-right: 0.5rem;
+}
+
+/* Success/Error states */
+.gluex-success {
+    color: #28a745;
+    background-color: rgba(40, 167, 69, 0.1);
+    border: 1px solid rgba(40, 167, 69, 0.2);
+    border-radius: 0.5rem;
+    padding: 1rem;
+}
+
+.gluex-error {
+    color: #dc3545;
+    background-color: rgba(220, 53, 69, 0.1);
+    border: 1px solid rgba(220, 53, 69, 0.2);
+    border-radius: 0.5rem;
+    padding: 1rem;
+}
+
+/* GlueX Router specific colors */
+.gluex-primary {
+    color: #6366f1 !important;
+}
+
+.bg-gluex-primary {
+    background-color: #6366f1 !important;
+}
+
+.border-gluex-primary {
+    border-color: #6366f1 !important;
+}
+
+/* Multi-chain indicators */
+.chain-ethereum {
+    background: linear-gradient(135deg, #627eea 0%, #4f46e5 100%);
+}
+
+.chain-arbitrum {
+    background: linear-gradient(135deg, #28a0f0 0%, #1e40af 100%);
+}
+
+.chain-polygon {
+    background: linear-gradient(135deg, #8247e5 0%, #6d28d9 100%);
+}
+
+.chain-bsc {
+    background: linear-gradient(135deg, #f0b90b 0%, #d97706 100%);
+}
+
+.chain-optimism {
+    background: linear-gradient(135deg, #ff0420 0%, #dc2626 100%);
+}
+
+/* Route optimization metrics */
+.optimization-metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.optimization-metric:last-child {
+    border-bottom: none;
+}
+
+.optimization-value {
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.optimization-improvement {
+    color: #28a745;
+    font-weight: 600;
+}
+
+.optimization-degradation {
+    color: #dc3545;
+    font-weight: 600;
+}
+
+/* Protocol status indicators */
+.protocol-status-active {
+    background-color: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid rgba(40, 167, 69, 0.2);
+}
+
+.protocol-status-limited {
+    background-color: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid rgba(255, 193, 7, 0.2);
+}
+
+.protocol-status-inactive {
+    background-color: rgba(108, 117, 125, 0.1);
+    color: #6c757d;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid rgba(108, 117, 125, 0.2);
+}
+
+/* Yield optimization cards */
+.yield-card {
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.05) 0%, rgba(40, 167, 69, 0.1) 100%);
+    border: 1px solid rgba(40, 167, 69, 0.2);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.yield-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.15);
+}
+
+.yield-apy {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #28a745;
+}
+
+.yield-amount {
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+/* Cross-chain routing table enhancements */
+.routing-table {
+    background: white;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.routing-table th {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    font-weight: 600;
+    color: #495057;
+    border: none;
+    padding: 1rem 0.75rem;
+}
+
+.routing-table td {
+    padding: 1rem 0.75rem;
+    border-top: 1px solid #f1f3f4;
+    vertical-align: middle;
+}
+
+.routing-table tbody tr:hover {
+    background-color: rgba(99, 102, 241, 0.05);
+}
+
+/* Asset conversion flow */
+.conversion-flow {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.875rem;
+    color: #495057;
+}
+
+.conversion-arrow {
+    color: #6366f1;
+    font-weight: bold;
+}
+
+/* Time and cost indicators */
+.time-estimate {
+    color: #17a2b8;
+    font-weight: 500;
+}
+
+.cost-estimate {
+    color: #28a745;
+    font-weight: 600;
+}
+
+/* Router analytics charts */
+.router-chart-container {
+    position: relative;
+    background: white;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Settings panel styling */
+.settings-panel {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border: 1px solid #e9ecef;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+}
+
+.settings-panel .form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.75rem;
+}
+
+.settings-panel .form-control,
+.settings-panel .form-select {
+    border: 2px solid #e9ecef;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    transition: all 0.2s ease;
+}
+
+.settings-panel .form-control:focus,
+.settings-panel .form-select:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+}
+
+.settings-panel .form-check-input {
+    width: 1.25rem;
+    height: 1.25rem;
+    border: 2px solid #e9ecef;
+    border-radius: 0.25rem;
+}
+
+.settings-panel .form-check-input:checked {
+    background-color: #6366f1;
+    border-color: #6366f1;
+}
+
+.settings-panel .btn-primary {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.settings-panel .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+/* Router status dashboard */
+.router-dashboard {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.router-stat-card {
+    background: white;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.router-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.router-stat-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.router-stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.router-stat-label {
+    color: #6c757d;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* Responsive adjustments for GlueX */
+@media (max-width: 992px) {
+    .router-dashboard {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .protocol-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 576px) {
+    .router-dashboard {
+        grid-template-columns: 1fr;
+    }
+    
+    .router-stat-card {
+        padding: 1rem;
+    }
+    
+    .router-stat-value {
+        font-size: 1.5rem;
+    }
+    
+    .settings-panel {
+        padding: 1rem;
     }
 }

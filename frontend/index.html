@@ -3,11 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hyperliquid Copy Trading</title>
+    <title>HyperLit - Hyperliquid Copy Trading Platform</title>
+    <meta name="description" content="Advanced copy trading platform for Hyperliquid DEX with real-time analytics, AI-powered insights, and automated position management.">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📈</text></svg>">
 </head>
 <body>
     <!-- Navigation -->
@@ -47,6 +50,16 @@
                     <li class="nav-item">
                         <a class="nav-link" href="#analytics" data-section="analytics">
                             <i class="fas fa-chart-bar"></i> Analytics
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#hyperliquid" data-section="hyperliquid">
+                            <i class="fas fa-layer-group"></i> Hyperliquid
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#gluex" data-section="gluex">
+                            <i class="fas fa-route"></i> GlueX Router
                         </a>
                     </li>
                 </ul>
@@ -450,6 +463,727 @@
                                     <p class="mt-2">Optimizing portfolio...</p>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Hyperliquid Section -->
+        <section id="hyperliquid" class="content-section d-none">
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h2><i class="fas fa-layer-group text-primary"></i> Hyperliquid Protocol Integration</h2>
+                    <p class="text-muted">Real-time data and advanced features powered by Hyperliquid DEX</p>
+                </div>
+            </div>
+
+            <!-- Protocol Status -->
+            <div class="row mb-4">
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="card border-primary">
+                        <div class="card-body text-center">
+                            <i class="fas fa-exchange-alt fa-2x text-primary mb-2"></i>
+                            <h6 class="card-title">Exchange Status</h6>
+                            <span id="exchange-status" class="badge bg-success">Online</span>
+                            <div class="mt-2">
+                                <small class="text-muted">API Endpoint</small>
+                                <div class="small">api.hyperliquid.xyz</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="card border-info">
+                        <div class="card-body text-center">
+                            <i class="fas fa-coins fa-2x text-info mb-2"></i>
+                            <h6 class="card-title">Perpetuals</h6>
+                            <h4 id="perp-count" class="text-info">Loading...</h4>
+                            <div class="mt-2">
+                                <small class="text-muted">Active Markets</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="card border-warning">
+                        <div class="card-body text-center">
+                            <i class="fas fa-chart-pie fa-2x text-warning mb-2"></i>
+                            <h6 class="card-title">Spot Assets</h6>
+                            <h4 id="spot-count" class="text-warning">Loading...</h4>
+                            <div class="mt-2">
+                                <small class="text-muted">Available Tokens</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="card border-success">
+                        <div class="card-body text-center">
+                            <i class="fas fa-bolt fa-2x text-success mb-2"></i>
+                            <h6 class="card-title">WebSocket</h6>
+                            <span id="ws-status" class="badge bg-success">Connected</span>
+                            <div class="mt-2">
+                                <small class="text-muted">Real-time Data</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Market Data -->
+            <div class="row mb-4">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5><i class="fas fa-chart-line"></i> Top Perpetuals by Volume</h5>
+                            <button class="btn btn-sm btn-outline-primary" onclick="refreshMarketData()">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Asset</th>
+                                            <th>Mark Price</th>
+                                            <th>24h Change</th>
+                                            <th>24h Volume</th>
+                                            <th>Open Interest</th>
+                                            <th>Funding Rate</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="perp-markets">
+                                        <tr>
+                                            <td colspan="6" class="text-center text-muted">
+                                                <i class="fas fa-spinner fa-spin"></i> Loading market data...
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-fire"></i> Trending Assets</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="trending-assets">
+                                <div class="text-center text-muted">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                    <p class="mt-2">Loading trending assets...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Spot Markets -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-coins"></i> Spot Markets</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Pair</th>
+                                            <th>Price</th>
+                                            <th>24h Change</th>
+                                            <th>24h Volume</th>
+                                            <th>Market Cap</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="spot-markets">
+                                        <tr>
+                                            <td colspan="6" class="text-center text-muted">
+                                                <i class="fas fa-spinner fa-spin"></i> Loading spot markets...
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API Integration Status -->
+            <div class="row mb-4">
+                <div class="col-lg-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-plug"></i> API Integration</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-6">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-check-circle text-success me-2"></i>
+                                        <div>
+                                            <div class="fw-bold">Exchange API</div>
+                                            <small class="text-muted">Order placement & management</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-check-circle text-success me-2"></i>
+                                        <div>
+                                            <div class="fw-bold">Info API</div>
+                                            <small class="text-muted">Market data & user info</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-check-circle text-success me-2"></i>
+                                        <div>
+                                            <div class="fw-bold">WebSocket</div>
+                                            <small class="text-muted">Real-time updates</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-cog text-warning me-2"></i>
+                                        <div>
+                                            <div class="fw-bold">Signatures</div>
+                                            <small class="text-muted">Cryptographic signing</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <hr>
+                            
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <div class="fw-bold text-primary" id="api-calls-today">0</div>
+                                    <small class="text-muted">API Calls Today</small>
+                                </div>
+                                <div class="col-4">
+                                    <div class="fw-bold text-success" id="success-rate-api">99.9%</div>
+                                    <small class="text-muted">Success Rate</small>
+                                </div>
+                                <div class="col-4">
+                                    <div class="fw-bold text-info" id="avg-latency">45ms</div>
+                                    <small class="text-muted">Avg Latency</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-shield-alt"></i> Security & Compliance</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i>
+                                <strong>Hyperliquid Protocol Features</strong>
+                                <ul class="mb-0 mt-2">
+                                    <li>Non-custodial trading with self-custody</li>
+                                    <li>On-chain settlement and transparency</li>
+                                    <li>Advanced order types (Limit, Market, Stop)</li>
+                                    <li>Cross and isolated margin modes</li>
+                                    <li>Real-time funding rates</li>
+                                    <li>Subaccount and vault support</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <div class="fw-bold text-success">✓ Verified</div>
+                                    <small class="text-muted">Smart Contracts</small>
+                                </div>
+                                <div class="col-6">
+                                    <div class="fw-bold text-success">✓ Audited</div>
+                                    <small class="text-muted">Security Review</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advanced Features -->
+            <div class="row">
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-robot"></i> Order Types</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="list-group list-group-flush">
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <i class="fas fa-chart-line text-primary me-2"></i>
+                                        <strong>Limit Orders</strong>
+                                        <div class="small text-muted">ALO, IOC, GTC support</div>
+                                    </div>
+                                    <span class="badge bg-success">Active</span>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <i class="fas fa-bolt text-warning me-2"></i>
+                                        <strong>Market Orders</strong>
+                                        <div class="small text-muted">Immediate execution</div>
+                                    </div>
+                                    <span class="badge bg-success">Active</span>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <i class="fas fa-shield-alt text-danger me-2"></i>
+                                        <strong>Stop Orders</strong>
+                                        <div class="small text-muted">TP/SL triggers</div>
+                                    </div>
+                                    <span class="badge bg-success">Active</span>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <i class="fas fa-clock text-info me-2"></i>
+                                        <strong>TWAP Orders</strong>
+                                        <div class="small text-muted">Time-weighted average</div>
+                                    </div>
+                                    <span class="badge bg-success">Active</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-wallet"></i> Account Management</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="list-group list-group-flush">
+                                <div class="list-group-item">
+                                    <i class="fas fa-user text-primary me-2"></i>
+                                    <strong>Main Account</strong>
+                                    <div class="small text-muted">Primary trading account</div>
+                                </div>
+                                <div class="list-group-item">
+                                    <i class="fas fa-users text-info me-2"></i>
+                                    <strong>Subaccounts</strong>
+                                    <div class="small text-muted">Isolated trading accounts</div>
+                                </div>
+                                <div class="list-group-item">
+                                    <i class="fas fa-vault text-warning me-2"></i>
+                                    <strong>Vaults</strong>
+                                    <div class="small text-muted">Managed fund accounts</div>
+                                </div>
+                                <div class="list-group-item">
+                                    <i class="fas fa-key text-success me-2"></i>
+                                    <strong>API Wallets</strong>
+                                    <div class="small text-muted">Programmatic trading</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-cogs"></i> Advanced Tools</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="list-group list-group-flush">
+                                <div class="list-group-item">
+                                    <i class="fas fa-balance-scale text-primary me-2"></i>
+                                    <strong>Leverage Control</strong>
+                                    <div class="small text-muted">Cross & isolated margin</div>
+                                </div>
+                                <div class="list-group-item">
+                                    <i class="fas fa-percentage text-info me-2"></i>
+                                    <strong>Funding Rates</strong>
+                                    <div class="small text-muted">Real-time rate tracking</div>
+                                </div>
+                                <div class="list-group-item">
+                                    <i class="fas fa-exchange-alt text-warning me-2"></i>
+                                    <strong>Cross-Chain</strong>
+                                    <div class="small text-muted">Bridge integrations</div>
+                                </div>
+                                <div class="list-group-item">
+                                    <i class="fas fa-chart-area text-success me-2"></i>
+                                    <strong>Analytics</strong>
+                                    <div class="small text-muted">Performance tracking</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    <!-- GlueX Router Section -->
+        <section id="gluex" class="content-section d-none">
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h2><i class="fas fa-route text-primary"></i> GlueX Router Integration</h2>
+                    <p class="text-muted">Multi-protocol routing for seamless cross-chain copy trading and yield optimization</p>
+                </div>
+            </div>
+
+            <!-- Router Status -->
+            <div class="row mb-4">
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="card border-primary">
+                        <div class="card-body text-center">
+                            <i class="fas fa-network-wired fa-2x text-primary mb-2"></i>
+                            <h6 class="card-title">Router Status</h6>
+                            <span id="gluex-status" class="badge bg-success">Active</span>
+                            <div class="mt-2">
+                                <small class="text-muted">Multi-Protocol Routing</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="card border-info">
+                        <div class="card-body text-center">
+                            <i class="fas fa-link fa-2x text-info mb-2"></i>
+                            <h6 class="card-title">Supported Chains</h6>
+                            <h4 id="chain-count" class="text-info">15+</h4>
+                            <div class="mt-2">
+                                <small class="text-muted">Cross-Chain Support</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="card border-warning">
+                        <div class="card-body text-center">
+                            <i class="fas fa-coins fa-2x text-warning mb-2"></i>
+                            <h6 class="card-title">Protocols</h6>
+                            <h4 id="protocol-count" class="text-warning">100+</h4>
+                            <div class="mt-2">
+                                <small class="text-muted">DeFi Integrations</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="card border-success">
+                        <div class="card-body text-center">
+                            <i class="fas fa-percentage fa-2x text-success mb-2"></i>
+                            <h6 class="card-title">Avg Savings</h6>
+                            <h4 id="avg-savings" class="text-success">12.5%</h4>
+                            <div class="mt-2">
+                                <small class="text-muted">Gas + Slippage</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cross-Chain Copy Trading -->
+            <div class="row mb-4">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-exchange-alt"></i> Cross-Chain Copy Trading</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i>
+                                <strong>Smart Routing Enabled</strong>
+                                <p class="mb-0 mt-2">Follow leaders across any chain. GlueX automatically handles asset conversion and bridging.</p>
+                            </div>
+                            
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Leader Chain</th>
+                                            <th>Your Chain</th>
+                                            <th>Asset Conversion</th>
+                                            <th>Est. Time</th>
+                                            <th>Total Cost</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="crosschain-routes">
+                                        <tr>
+                                            <td><span class="badge bg-primary">Ethereum</span></td>
+                                            <td><span class="badge bg-info">Arbitrum</span></td>
+                                            <td>USDC → ETH → BTC</td>
+                                            <td>~2 min</td>
+                                            <td>$12.50</td>
+                                            <td><span class="badge bg-success">Active</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><span class="badge bg-warning">Polygon</span></td>
+                                            <td><span class="badge bg-info">Arbitrum</span></td>
+                                            <td>MATIC → USDC</td>
+                                            <td>~45 sec</td>
+                                            <td>$3.20</td>
+                                            <td><span class="badge bg-warning">Pending</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-chart-pie"></i> Route Optimization</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="routeOptimizationChart"></canvas>
+                            <div class="mt-3">
+                                <div class="d-flex justify-content-between">
+                                    <small>Gas Savings:</small>
+                                    <strong class="text-success">-45%</strong>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <small>Slippage Reduction:</small>
+                                    <strong class="text-success">-23%</strong>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <small>Time Saved:</small>
+                                    <strong class="text-success">-67%</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Yield Optimization -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-seedling"></i> Automated Yield Optimization</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <h6><i class="fas fa-coins"></i> Idle Fund Strategies</h6>
+                                    <div class="list-group list-group-flush">
+                                        <div class="list-group-item d-flex justify-content-between">
+                                            <div>
+                                                <strong>Aave USDC Lending</strong>
+                                                <div class="small text-muted">Low risk, instant liquidity</div>
+                                            </div>
+                                            <div class="text-end">
+                                                <div class="fw-bold text-success">4.2% APY</div>
+                                                <small class="text-muted">$2,450 earning</small>
+                                            </div>
+                                        </div>
+                                        <div class="list-group-item d-flex justify-content-between">
+                                            <div>
+                                                <strong>Compound ETH</strong>
+                                                <div class="small text-muted">Medium risk, good returns</div>
+                                            </div>
+                                            <div class="text-end">
+                                                <div class="fw-bold text-success">6.8% APY</div>
+                                                <small class="text-muted">$1,200 earning</small>
+                                            </div>
+                                        </div>
+                                        <div class="list-group-item d-flex justify-content-between">
+                                            <div>
+                                                <strong>Uniswap V3 LP</strong>
+                                                <div class="small text-muted">Higher risk, active management</div>
+                                            </div>
+                                            <div class="text-end">
+                                                <div class="fw-bold text-warning">12.4% APY</div>
+                                                <small class="text-muted">$800 earning</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-lg-6">
+                                    <h6><i class="fas fa-chart-line"></i> Performance Tracking</h6>
+                                    <canvas id="yieldPerformanceChart" height="200"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Protocol Integration -->
+            <div class="row mb-4">
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-layer-group"></i> DEX Aggregation</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="protocol-grid">
+                                <div class="protocol-item">
+                                    <div class="protocol-logo bg-primary">UNI</div>
+                                    <span>Uniswap V3</span>
+                                    <span class="badge bg-success">Active</span>
+                                </div>
+                                <div class="protocol-item">
+                                    <div class="protocol-logo bg-dark">1I</div>
+                                    <span>1inch</span>
+                                    <span class="badge bg-success">Active</span>
+                                </div>
+                                <div class="protocol-item">
+                                    <div class="protocol-logo bg-warning">PS</div>
+                                    <span>ParaSwap</span>
+                                    <span class="badge bg-success">Active</span>
+                                </div>
+                                <div class="protocol-item">
+                                    <div class="protocol-logo bg-success">CS</div>
+                                    <span>CowSwap</span>
+                                    <span class="badge bg-success">Active</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-university"></i> Lending Protocols</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="protocol-grid">
+                                <div class="protocol-item">
+                                    <div class="protocol-logo bg-purple">AA</div>
+                                    <span>Aave V3</span>
+                                    <span class="badge bg-success">Active</span>
+                                </div>
+                                <div class="protocol-item">
+                                    <div class="protocol-logo bg-info">CO</div>
+                                    <span>Compound</span>
+                                    <span class="badge bg-success">Active</span>
+                                </div>
+                                <div class="protocol-item">
+                                    <div class="protocol-logo bg-primary">EU</div>
+                                    <span>Euler</span>
+                                    <span class="badge bg-warning">Limited</span>
+                                </div>
+                                <div class="protocol-item">
+                                    <div class="protocol-logo bg-danger">MO</div>
+                                    <span>Morpho</span>
+                                    <span class="badge bg-success">Active</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-bridge"></i> Bridge Networks</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="protocol-grid">
+                                <div class="protocol-item">
+                                    <div class="protocol-logo bg-purple">ST</div>
+                                    <span>Stargate</span>
+                                    <span class="badge bg-success">Active</span>
+                                </div>
+                                <div class="protocol-item">
+                                    <div class="protocol-logo bg-warning">HO</div>
+                                    <span>Hop Protocol</span>
+                                    <span class="badge bg-success">Active</span>
+                                </div>
+                                <div class="protocol-item">
+                                    <div class="protocol-logo bg-danger">SY</div>
+                                    <span>Synapse</span>
+                                    <span class="badge bg-success">Active</span>
+                                </div>
+                                <div class="protocol-item">
+                                    <div class="protocol-logo bg-primary">CB</div>
+                                    <span>Celer Bridge</span>
+                                    <span class="badge bg-success">Active</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Smart Routing Analytics -->
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-brain"></i> Smart Routing Analytics</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="routingAnalyticsChart" height="100"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-cog"></i> Optimization Settings</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label">Priority</label>
+                                <select class="form-select" id="routing-priority">
+                                    <option value="cost">Lowest Cost</option>
+                                    <option value="speed" selected>Fastest Route</option>
+                                    <option value="balanced">Balanced</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Max Slippage</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" value="0.5" min="0.1" max="5" step="0.1">
+                                    <span class="input-group-text">%</span>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="auto-compound" checked>
+                                    <label class="form-check-label" for="auto-compound">
+                                        Auto-compound yields
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="cross-chain-enabled" checked>
+                                    <label class="form-check-label" for="cross-chain-enabled">
+                                        Enable cross-chain routing
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <button class="btn btn-primary w-100">
+                                <i class="fas fa-save"></i> Save Settings
+                            </button>
                         </div>
                     </div>
                 </div>

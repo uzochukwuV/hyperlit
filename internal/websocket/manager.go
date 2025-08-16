@@ -35,7 +35,7 @@ func (m *Manager) SubscribeToLeader(leaderAddress string) (chan models.TradeEven
 	defer m.clientsMutex.Unlock()
 
 	// Check if we already have a client for this leader
-	if client, exists := m.clients[leaderAddress]; exists {
+	if _, exists := m.clients[leaderAddress]; exists {
 		return m.tradeChannels[leaderAddress], m.userChannels[leaderAddress], nil
 	}
 

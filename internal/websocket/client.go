@@ -1,12 +1,9 @@
 package websocket
 
 import (
-	"context"
-	"encoding/json"
 	"hyperliquid-copy-trading/config"
 	"hyperliquid-copy-trading/internal/models"
 	"net/url"
-	"strconv"
 	"sync"
 	"time"
 

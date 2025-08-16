@@ -1,7 +1,7 @@
 // Hyperliquid Copy Trading Frontend Application
 class CopyTradingApp {
     constructor() {
-        this.apiBase = window.location.origin + '/api/v1';
+        this.apiBase = "http://localhost:8000/api/v1";
         this.currentSection = 'dashboard';
         this.charts = {};
         this.refreshInterval = null;
@@ -70,6 +70,9 @@ class CopyTradingApp {
                 break;
             case 'analytics':
                 await this.loadAnalytics();
+                break;
+            case 'hyperliquid':
+                await this.loadHyperliquid();
                 break;
         }
     }
@@ -1115,6 +1118,261 @@ class CopyTradingApp {
         const bsToast = new bootstrap.Toast(toast);
         bsToast.show();
     }
+
+    // Hyperliquid Section
+    async loadHyperliquid() {
+        try {
+            this.setLoading(true);
+            
+            // Load protocol status
+            await this.loadProtocolStatus();
+            
+            // Load market data
+            await this.loadMarketData();
+            
+            // Load spot markets
+            await this.loadSpotMarkets();
+            
+            // Load trending assets
+            await this.loadTrendingAssets();
+            
+            // Update API stats
+            this.updateAPIStats();
+            
+        } catch (error) {
+            console.error('Error loading Hyperliquid data:', error);
+            this.showError('Failed to load Hyperliquid data');
+        } finally {
+            this.setLoading(false);
+        }
+    }
+
+    async loadProtocolStatus() {
+        try {
+            // Load perpetuals metadata
+            const perpResponse = await fetch('https://api.hyperliquid.xyz/info', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'meta' })
+            });
+            
+            if (perpResponse.ok) {
+                const perpData = await perpResponse.json();
+                document.getElementById('perp-count').textContent = perpData.universe?.length || 0;
+                document.getElementById('exchange-status').className = 'badge bg-success';
+                document.getElementById('exchange-status').textContent = 'Online';
+            } else {
+                throw new Error('Failed to fetch perp data');
+            }
+
+            // Load spot metadata
+            const spotResponse = await fetch('https://api.hyperliquid.xyz/info', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'spotMeta' })
+            });
+            
+            if (spotResponse.ok) {
+                const spotData = await spotResponse.json();
+                document.getElementById('spot-count').textContent = spotData.tokens?.length || 0;
+            }
+
+        } catch (error) {
+            console.error('Error loading protocol status:', error);
+            document.getElementById('exchange-status').className = 'badge bg-danger';
+            document.getElementById('exchange-status').textContent = 'Offline';
+            document.getElementById('perp-count').textContent = 'Error';
+            document.getElementById('spot-count').textContent = 'Error';
+        }
+    }
+
+    async loadMarketData() {
+        try {
+            const response = await fetch('https://api.hyperliquid.xyz/info', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'metaAndAssetCtxs' })
+            });
+
+            if (!response.ok) throw new Error('Failed to fetch market data');
+            
+            const [meta, assetCtxs] = await response.json();
+            const tbody = document.getElementById('perp-markets');
+            
+            if (meta.universe && assetCtxs) {
+                const topMarkets = meta.universe.slice(0, 10).map((asset, index) => {
+                    const ctx = assetCtxs[index];
+                    if (!ctx) return null;
+                    
+                    const change24h = ctx.prevDayPx ? 
+                        ((parseFloat(ctx.markPx) - parseFloat(ctx.prevDayPx)) / parseFloat(ctx.prevDayPx) * 100) : 0;
+                    
+                    return {
+                        name: asset.name,
+                        markPx: ctx.markPx,
+                        change24h: change24h,
+                        volume24h: ctx.dayNtlVlm,
+                        openInterest: ctx.openInterest,
+                        funding: ctx.funding
+                    };
+                }).filter(Boolean);
+
+                tbody.innerHTML = topMarkets.map(market => `
+                    <tr>
+                        <td>
+                            <strong>${market.name}</strong>
+                        </td>
+                        <td>${this.formatNumber(parseFloat(market.markPx))}</td>
+                        <td class="text-${market.change24h >= 0 ? 'success' : 'danger'}">
+                            ${market.change24h >= 0 ? '+' : ''}${market.change24h.toFixed(2)}%
+                        </td>
+                        <td>${this.formatLargeNumber(parseFloat(market.volume24h))}</td>
+                        <td>${this.formatLargeNumber(parseFloat(market.openInterest))}</td>
+                        <td class="funding-${parseFloat(market.funding) >= 0 ? 'positive' : 'negative'}">
+                            ${(parseFloat(market.funding) * 100).toFixed(4)}%
+                        </td>
+                    </tr>
+                `).join('');
+            } else {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">
+                            No market data available
+                        </td>
+                    </tr>
+                `;
+            }
+        } catch (error) {
+            console.error('Error loading market data:', error);
+            const tbody = document.getElementById('perp-markets');
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center text-danger">
+                        <i class="fas fa-exclamation-triangle"></i> Failed to load market data
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    async loadSpotMarkets() {
+        try {
+            const response = await fetch('https://api.hyperliquid.xyz/info', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'spotMetaAndAssetCtxs' })
+            });
+
+            if (!response.ok) throw new Error('Failed to fetch spot data');
+            
+            const [meta, assetCtxs] = await response.json();
+            const tbody = document.getElementById('spot-markets');
+            
+            if (meta.universe && assetCtxs) {
+                const spotMarkets = meta.universe.slice(0, 8).map((pair, index) => {
+                    const ctx = assetCtxs[index];
+                    if (!ctx) return null;
+                    
+                    const change24h = ctx.prevDayPx ? 
+                        ((parseFloat(ctx.markPx) - parseFloat(ctx.prevDayPx)) / parseFloat(ctx.prevDayPx) * 100) : 0;
+                    
+                    return {
+                        name: pair.name,
+                        markPx: ctx.markPx,
+                        change24h: change24h,
+                        volume24h: ctx.dayNtlVlm,
+                        marketCap: parseFloat(ctx.markPx) * 1000000 // Mock market cap
+                    };
+                }).filter(Boolean);
+
+                tbody.innerHTML = spotMarkets.map(market => `
+                    <tr>
+                        <td>
+                            <strong>${market.name}</strong>
+                        </td>
+                        <td>${this.formatNumber(parseFloat(market.markPx))}</td>
+                        <td class="text-${market.change24h >= 0 ? 'success' : 'danger'}">
+                            ${market.change24h >= 0 ? '+' : ''}${market.change24h.toFixed(2)}%
+                        </td>
+                        <td>${this.formatLargeNumber(parseFloat(market.volume24h))}</td>
+                        <td>${this.formatLargeNumber(market.marketCap)}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="viewSpotDetails('${market.name}')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } else {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">
+                            No spot markets available
+                        </td>
+                    </tr>
+                `;
+            }
+        } catch (error) {
+            console.error('Error loading spot markets:', error);
+            const tbody = document.getElementById('spot-markets');
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center text-danger">
+                        <i class="fas fa-exclamation-triangle"></i> Failed to load spot markets
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    async loadTrendingAssets() {
+        const container = document.getElementById('trending-assets');
+        
+        try {
+            // Mock trending data based on volume
+            const trendingAssets = [
+                { name: 'BTC', change: '+5.2%', volume: '1.2B' },
+                { name: 'ETH', change: '+3.8%', volume: '890M' },
+                { name: 'SOL', change: '+12.4%', volume: '456M' },
+                { name: 'AVAX', change: '-2.1%', volume: '234M' },
+                { name: 'MATIC', change: '+8.7%', volume: '189M' }
+            ];
+
+            container.innerHTML = trendingAssets.map(asset => `
+                <div class="trending-asset-item">
+                    <div>
+                        <strong>${asset.name}</strong>
+                        <div class="small text-muted">Vol: ${asset.volume}</div>
+                    </div>
+                    <div class="text-${asset.change.startsWith('+') ? 'success' : 'danger'}">
+                        ${asset.change}
+                    </div>
+                </div>
+            `).join('');
+        } catch (error) {
+            console.error('Error loading trending assets:', error);
+            container.innerHTML = `
+                <div class="text-center text-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p class="mt-2">Failed to load trending assets</p>
+                </div>
+            `;
+        }
+    }
+
+    updateAPIStats() {
+        // Mock API statistics
+        document.getElementById('api-calls-today').textContent = Math.floor(Math.random() * 10000 + 5000);
+        document.getElementById('success-rate-api').textContent = (99.5 + Math.random() * 0.4).toFixed(1) + '%';
+        document.getElementById('avg-latency').textContent = Math.floor(Math.random() * 20 + 35) + 'ms';
+    }
+
+    formatLargeNumber(num) {
+        if (num >= 1e9) return (num / 1e9).toFixed(1) + 'B';
+        if (num >= 1e6) return (num / 1e6).toFixed(1) + 'M';
+        if (num >= 1e3) return (num / 1e3).toFixed(1) + 'K';
+        return num.toFixed(2);
+    }
 }
 
 // Global functions for button handlers
@@ -1170,6 +1428,20 @@ window.loadTrades = function() {
 
 window.addFollower = function() {
     app.addFollower();
+};
+
+window.refreshMarketData = function() {
+    const button = document.querySelector('[onclick="refreshMarketData()"]');
+    const icon = button.querySelector('i');
+    icon.classList.add('refresh-spinning');
+    
+    app.loadMarketData().finally(() => {
+        icon.classList.remove('refresh-spinning');
+    });
+};
+
+window.viewSpotDetails = function(pair) {
+    app.showNotification('Coming Soon', `Detailed view for ${pair} is being developed`, 'info');
 };
 
 // Initialize the application

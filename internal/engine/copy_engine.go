@@ -16,16 +16,16 @@ import (
 )
 
 type CopyEngine struct {
-	config           *config.Config
-	db               *database.PostgresDB
-	wsManager        *websocket.Manager
-	orderEngine      *OrderEngine
-	riskManager      *RiskManager
-	hyperliquidAPI   *api.HyperliquidAPI
-	activeLeaders    map[string]bool
-	leadersMutex     sync.RWMutex
-	shutdown         chan struct{}
-	wg               sync.WaitGroup
+	config         *config.Config
+	db             *database.PostgresDB
+	wsManager      *websocket.Manager
+	orderEngine    *OrderEngine
+	riskManager    *RiskManager
+	hyperliquidAPI *api.HyperliquidAPI
+	activeLeaders  map[string]bool
+	leadersMutex   sync.RWMutex
+	shutdown       chan struct{}
+	wg             sync.WaitGroup
 }
 
 func NewCopyEngine(cfg *config.Config, db *database.PostgresDB, wsManager *websocket.Manager) *CopyEngine {
@@ -35,14 +35,14 @@ func NewCopyEngine(cfg *config.Config, db *database.PostgresDB, wsManager *webso
 	}
 
 	return &CopyEngine{
-		config:          cfg,
-		db:              db,
-		wsManager:       wsManager,
-		orderEngine:     NewOrderEngine(cfg, hyperliquidAPI),
-		riskManager:     NewRiskManager(cfg),
-		hyperliquidAPI:  hyperliquidAPI,
-		activeLeaders:   make(map[string]bool),
-		shutdown:        make(chan struct{}),
+		config:         cfg,
+		db:             db,
+		wsManager:      wsManager,
+		orderEngine:    NewOrderEngine(cfg, hyperliquidAPI),
+		riskManager:    NewRiskManager(cfg),
+		hyperliquidAPI: hyperliquidAPI,
+		activeLeaders:  make(map[string]bool),
+		shutdown:       make(chan struct{}),
 	}
 }
 
@@ -87,6 +87,67 @@ func (ce *CopyEngine) Stop() {
 	close(ce.shutdown)
 	ce.wg.Wait()
 	log.Info().Msg("Copy Trading Engine stopped")
+}
+
+// GetWSHealth returns WebSocket connection health status
+func (ce *CopyEngine) GetWSHealth() map[string]interface{} {
+	health := ce.wsManager.HealthCheck()
+	activeConnections := ce.wsManager.GetActiveConnections()
+	
+	return map[string]interface{}{
+		"healthy":            len(health) > 0,
+		"active_connections": activeConnections,
+		"connection_details": health,
+	}
+}
+
+// GetActiveWebSocketConnections returns the number of active WebSocket connections
+func (ce *CopyEngine) GetActiveWebSocketConnections() int {
+	return ce.wsManager.GetActiveConnections()
+}
+
+// GetOrderQueueStatus returns order queue status from order engine
+func (ce *CopyEngine) GetOrderQueueStatus() map[string]interface{} {
+	return ce.orderEngine.GetQueueStatus()
+}
+
+// AddFollower adds a new follower and starts monitoring their leader
+func (ce *CopyEngine) AddFollower(ctx context.Context, follower *models.Follower) error {
+	// Create follower in database
+	if err := ce.db.CreateFollower(ctx, follower); err != nil {
+		return err
+	}
+	
+	// Start monitoring the leader if not already monitored
+	ce.leadersMutex.Lock()
+	if !ce.activeLeaders[follower.LeaderAddress] {
+		ce.activeLeaders[follower.LeaderAddress] = true
+		ce.leadersMutex.Unlock()
+		ce.startMonitoringLeader(follower.LeaderAddress)
+	} else {
+		ce.leadersMutex.Unlock()
+	}
+	
+	log.Info().Int("follower_id", follower.ID).Str("leader", follower.LeaderAddress).Msg("Follower added")
+	return nil
+}
+
+// RemoveFollower removes a follower and stops monitoring their leader if no other followers
+func (ce *CopyEngine) RemoveFollower(ctx context.Context, followerID int) error {
+	// Delete from database
+	if err := ce.db.DeleteFollower(ctx, followerID); err != nil {
+		return err
+	}
+	
+	// Check if we need to stop monitoring any leaders
+	ce.wg.Add(1)
+	go func() {
+		defer ce.wg.Done()
+		ce.loadActiveFollowers(ctx)
+	}()
+	
+	log.Info().Int("follower_id", followerID).Msg("Follower removed")
+	return nil
 }
 
 func (ce *CopyEngine) loadAndMonitorFollowers(ctx context.Context) {
@@ -247,7 +308,7 @@ func (ce *CopyEngine) processLeaderTrade(leaderAddress string, tradeEvent models
 
 func (ce *CopyEngine) processFollowersInBatches(ctx context.Context, followers []models.Follower, tradeEvent models.TradeEvent, leaderTrade *models.Trade) {
 	batchSize := ce.config.MaxOrderBatchSize
-	
+
 	for i := 0; i < len(followers); i += batchSize {
 		end := i + batchSize
 		if end > len(followers) {
@@ -300,16 +361,16 @@ func (ce *CopyEngine) processBatch(ctx context.Context, followers []models.Follo
 
 		// Store follower trade
 		followerTrade := &models.Trade{
-			LeaderAddress:   leaderTrade.LeaderAddress,
-			FollowerID:      &follower.ID,
-			Asset:           leaderTrade.Asset,
-			Side:            leaderTrade.Side,
-			Size:            positionSize,
-			Price:           leaderTrade.Price,
-			OrderType:       "market",
-			IsLeaderTrade:   false,
-			ExecutedAt:      time.Now(),
-			Status:          "pending",
+			LeaderAddress: leaderTrade.LeaderAddress,
+			FollowerID:    &follower.ID,
+			Asset:         leaderTrade.Asset,
+			Side:          leaderTrade.Side,
+			Size:          positionSize,
+			Price:         leaderTrade.Price,
+			OrderType:     "market",
+			IsLeaderTrade: false,
+			ExecutedAt:    time.Now(),
+			Status:        "pending",
 		}
 
 		if err := ce.db.CreateTrade(ctx, followerTrade); err != nil {
@@ -467,60 +528,3 @@ func (ce *CopyEngine) runMaintenance(ctx context.Context) {
 		Msg("Copy engine status")
 }
 
-// AddFollower adds a new follower and starts monitoring if needed
-func (ce *CopyEngine) AddFollower(ctx context.Context, follower *models.Follower) error {
-	if err := ce.db.CreateFollower(ctx, follower); err != nil {
-		return err
-	}
-
-	// Start monitoring leader if not already monitored
-	ce.leadersMutex.RLock()
-	isMonitored := ce.activeLeaders[follower.LeaderAddress]
-	ce.leadersMutex.RUnlock()
-
-	if !isMonitored && follower.IsActive {
-		ce.startMonitoringLeader(follower.LeaderAddress)
-	}
-
-	return nil
-}
-
-// RemoveFollower removes a follower and stops monitoring if no followers left
-func (ce *CopyEngine) RemoveFollower(ctx context.Context, followerID int) error {
-	// Get follower details before deletion
-	followers, err := ce.db.GetFollowers(ctx)
-	if err != nil {
-		return err
-	}
-
-	var followerToDelete *models.Follower
-	for _, f := range followers {
-		if f.ID == followerID {
-			followerToDelete = &f
-			break
-		}
-	}
-
-	if followerToDelete == nil {
-		return fmt.Errorf("follower not found")
-	}
-
-	// Delete follower
-	if err := ce.db.DeleteFollower(ctx, followerID); err != nil {
-		return err
-	}
-
-	// Check if this was the last follower for this leader
-	remainingFollowers, err := ce.db.GetFollowersByLeader(ctx, followerToDelete.LeaderAddress)
-	if err != nil {
-		return err
-	}
-
-	if len(remainingFollowers) == 0 {
-		ce.leadersMutex.Lock()
-		ce.stopMonitoringLeader(followerToDelete.LeaderAddress)
-		ce.leadersMutex.Unlock()
-	}
-
-	return nil
-}

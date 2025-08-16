@@ -129,7 +129,7 @@ func (s *Signer) encodeDomain(domain apitypes.TypedDataDomain) ([]byte, error) {
 
 	nameHash := s.keccak256([]byte(domain.Name))
 	versionHash := s.keccak256([]byte(domain.Version))
-	chainId := domain.ChainId.ToInt()
+	chainId := (*big.Int)(domain.ChainId)
 	address := common.HexToAddress(domain.VerifyingContract)
 
 	return s.keccak256(
