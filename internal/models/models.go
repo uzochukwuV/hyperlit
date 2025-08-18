@@ -378,3 +378,195 @@ type TradeRecommendation struct {
 	ValidUntil      time.Time `json:"valid_until"`
 	CreatedAt       time.Time `json:"created_at"`
 }
+
+// === PERMISSIONLESS COPY TRADING MODELS ===
+
+// PermissionlessFollower allows copying any trader without their consent
+type PermissionlessFollower struct {
+	ID                   int                    `json:"id"`
+	UserID               string                 `json:"user_id"`
+	TargetTraderAddress  string                 `json:"target_trader_address"`
+	APIWalletAddress     string                 `json:"api_wallet_address"`
+	CopyPercentage       float64                `json:"copy_percentage"`
+	MaxPositionSize      float64                `json:"max_position_size"`
+	MinTradeSize         float64                `json:"min_trade_size"`
+	AssetWhitelist       []string               `json:"asset_whitelist,omitempty"`
+	AssetBlacklist       []string               `json:"asset_blacklist,omitempty"`
+	AutoDiscoveryEnabled bool                   `json:"auto_discovery_enabled"`
+	CopyFilters          *CopyFilters           `json:"copy_filters"`
+	IsActive             bool                   `json:"is_active"`
+	CreatedAt            time.Time              `json:"created_at"`
+	UpdatedAt            time.Time              `json:"updated_at"`
+}
+
+type CopyFilters struct {
+	MinPositionValue     float64   `json:"min_position_value"`
+	MaxPositionValue     float64   `json:"max_position_value"`
+	OnlyProfitableTrades bool      `json:"only_profitable_trades"`
+	ExcludeLeverageAbove int       `json:"exclude_leverage_above"`
+	TimeDelaySeconds     int       `json:"time_delay_seconds"`
+	OnlyDuringHours      *TimeRange `json:"only_during_hours,omitempty"`
+	SlippageTolerance    float64   `json:"slippage_tolerance"`
+	MaxDrawdownStop      float64   `json:"max_drawdown_stop"`
+}
+
+type TimeRange struct {
+	StartHour int `json:"start_hour"` // 0-23
+	EndHour   int `json:"end_hour"`   // 0-23
+}
+
+// CopyTrade records each copy trading execution
+type CopyTrade struct {
+	ID                    int       `json:"id"`
+	OriginalTraderAddress string    `json:"original_trader_address"`
+	FollowerID            int       `json:"follower_id"`
+	OriginalTradeHash     string    `json:"original_trade_hash"`
+	Asset                 string    `json:"asset"`
+	Side                  string    `json:"side"`
+	OriginalSize          string    `json:"original_size"`
+	CopiedSize            string    `json:"copied_size"`
+	OriginalPrice         string    `json:"original_price"`
+	ExecutedPrice         string    `json:"executed_price,omitempty"`
+	Slippage              float64   `json:"slippage"`
+	DelayMs               int64     `json:"delay_ms"` // Execution delay
+	Status                string    `json:"status"`
+	ErrorMessage          string    `json:"error_message,omitempty"`
+	ExecutedAt            time.Time `json:"executed_at"`
+	CreatedAt             time.Time `json:"created_at"`
+}
+
+// TraderDiscovery tracks discovered traders
+type TraderDiscovery struct {
+	ID                  int                   `json:"id"`
+	Address             string                `json:"address"`
+	FirstDiscovered     time.Time             `json:"first_discovered"`
+	TotalVolume         float64               `json:"total_volume"`
+	TradeCount          int                   `json:"trade_count"`
+	WinRate             float64               `json:"win_rate"`
+	ProfitLoss          float64               `json:"profit_loss"`
+	MaxDrawdown         float64               `json:"max_drawdown"`
+	SharpeRatio         float64               `json:"sharpe_ratio"`
+	LastActivity        time.Time             `json:"last_activity"`
+	IsActive            bool                  `json:"is_active"`
+	FollowerCount       int                   `json:"follower_count"`
+	AssetBreakdown      map[string]float64    `json:"asset_breakdown"`
+	PerformanceGrade    string                `json:"performance_grade"` // A, B, C, D, F
+	RiskLevel           string                `json:"risk_level"`        // Low, Medium, High
+	TradingStyle        string                `json:"trading_style"`     // Scalper, Swing, Position
+	UpdatedAt           time.Time             `json:"updated_at"`
+}
+
+// TraderRecommendation provides AI-powered trader recommendations
+type TraderRecommendation struct {
+	ID                    int       `json:"id"`
+	UserID                string    `json:"user_id"`
+	RecommendedTrader     string    `json:"recommended_trader"`
+	RecommendationScore   float64   `json:"recommendation_score"`
+	RecommendationReason  string    `json:"recommendation_reason"`
+	RiskCompatibility     float64   `json:"risk_compatibility"`
+	StyleMatch            float64   `json:"style_match"`
+	PerformanceScore      float64   `json:"performance_score"`
+	RecommendedAllocation float64   `json:"recommended_allocation"`
+	IsViewed              bool      `json:"is_viewed"`
+	IsAccepted            bool      `json:"is_accepted"`
+	CreatedAt             time.Time `json:"created_at"`
+}
+
+// CopyTradingStrategy defines different copying strategies
+type CopyTradingStrategy struct {
+	ID               int                    `json:"id"`
+	UserID           string                 `json:"user_id"`
+	StrategyName     string                 `json:"strategy_name"`
+	StrategyType     string                 `json:"strategy_type"` // "mirror", "proportional", "risk_adjusted"
+	TargetTraders    []string               `json:"target_traders"`
+	Allocations      map[string]float64     `json:"allocations"`
+	RebalanceFreq    string                 `json:"rebalance_frequency"`
+	MaxTotalRisk     float64                `json:"max_total_risk"`
+	Settings         map[string]interface{} `json:"settings"`
+	IsActive         bool                   `json:"is_active"`
+	PerformanceStats *StrategyPerformance   `json:"performance_stats,omitempty"`
+	CreatedAt        time.Time              `json:"created_at"`
+	UpdatedAt        time.Time              `json:"updated_at"`
+}
+
+type StrategyPerformance struct {
+	TotalReturn       float64   `json:"total_return"`
+	AnnualizedReturn  float64   `json:"annualized_return"`
+	MaxDrawdown       float64   `json:"max_drawdown"`
+	SharpeRatio       float64   `json:"sharpe_ratio"`
+	WinRate           float64   `json:"win_rate"`
+	TotalTrades       int       `json:"total_trades"`
+	AvgTradeReturn    float64   `json:"avg_trade_return"`
+	LastUpdated       time.Time `json:"last_updated"`
+}
+
+// TraderAnalytics provides deep analytics for any trader
+type TraderAnalytics struct {
+	Address              string                 `json:"address"`
+	AnalysisPeriod       string                 `json:"analysis_period"`
+	TotalTrades          int                    `json:"total_trades"`
+	TotalVolume          float64                `json:"total_volume"`
+	WinRate              float64                `json:"win_rate"`
+	ProfitFactor         float64                `json:"profit_factor"`
+	SharpeRatio          float64                `json:"sharpe_ratio"`
+	MaxDrawdown          float64                `json:"max_drawdown"`
+	AvgWin               float64                `json:"avg_win"`
+	AvgLoss              float64                `json:"avg_loss"`
+	LargestWin           float64                `json:"largest_win"`
+	LargestLoss          float64                `json:"largest_loss"`
+	ConsecutiveWins      int                    `json:"consecutive_wins"`
+	ConsecutiveLosses    int                    `json:"consecutive_losses"`
+	AssetPreferences     map[string]float64     `json:"asset_preferences"`
+	TradingHours         map[int]int            `json:"trading_hours"`        // Hour -> Trade count
+	TradingDays          map[string]int         `json:"trading_days"`         // Day -> Trade count
+	PositionSizes        []float64              `json:"position_sizes"`
+	HoldingTimes         []int                  `json:"holding_times"`        // Minutes
+	RiskMetrics          *RiskMetrics           `json:"risk_metrics"`
+	SeasonalPerformance  map[string]float64     `json:"seasonal_performance"` // Month -> Performance
+	MarketConditions     map[string]float64     `json:"market_conditions"`    // Bull/Bear/Sideways performance
+	AnalyzedAt           time.Time              `json:"analyzed_at"`
+}
+
+// SmartCopyOrder represents an order with intelligent execution
+type SmartCopyOrder struct {
+	ID                  int                    `json:"id"`
+	FollowerID          int                    `json:"follower_id"`
+	OriginalTradeHash   string                 `json:"original_trade_hash"`
+	Asset               string                 `json:"asset"`
+	Side                string                 `json:"side"`
+	TargetSize          float64                `json:"target_size"`
+	ExecutionStrategy   string                 `json:"execution_strategy"` // "immediate", "twap", "smart"
+	MaxSlippage         float64                `json:"max_slippage"`
+	TimeLimit           int                    `json:"time_limit"` // Seconds
+	PriceImprovement    float64                `json:"price_improvement"`
+	PartialExecutions   []PartialExecution     `json:"partial_executions"`
+	Status              string                 `json:"status"`
+	TotalExecuted       float64                `json:"total_executed"`
+	AveragePrice        float64                `json:"average_price"`
+	TotalSlippage       float64                `json:"total_slippage"`
+	CreatedAt           time.Time              `json:"created_at"`
+	CompletedAt         *time.Time             `json:"completed_at,omitempty"`
+}
+
+type PartialExecution struct {
+	Size        float64   `json:"size"`
+	Price       float64   `json:"price"`
+	Timestamp   time.Time `json:"timestamp"`
+	OrderID     string    `json:"order_id"`
+	MarketState string    `json:"market_state"` // Market conditions at execution
+}
+
+// CopyTradingInsights provides AI-driven insights
+type CopyTradingInsights struct {
+	UserID              string                 `json:"user_id"`
+	AnalysisPeriod      string                 `json:"analysis_period"`
+	TotalCopiedTrades   int                    `json:"total_copied_trades"`
+	SuccessfulTrades    int                    `json:"successful_trades"`
+	TotalReturn         float64                `json:"total_return"`
+	BestPerformingLeader string                `json:"best_performing_leader"`
+	WorstPerformingLeader string               `json:"worst_performing_leader"`
+	OptimalAllocations  map[string]float64     `json:"optimal_allocations"`
+	RiskAdjustedReturn  float64                `json:"risk_adjusted_return"`
+	RecommendedActions  []string               `json:"recommended_actions"`
+	GeneratedAt         time.Time              `json:"generated_at"`
+}

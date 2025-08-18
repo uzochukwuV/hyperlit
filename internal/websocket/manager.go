@@ -108,6 +108,14 @@ func (m *Manager) GetActiveConnections() int {
 	return len(m.clients)
 }
 
+// IsMonitoring checks if we're currently monitoring a specific trader
+func (m *Manager) IsMonitoring(leaderAddress string) bool {
+	m.clientsMutex.RLock()
+	defer m.clientsMutex.RUnlock()
+	_, exists := m.clients[leaderAddress]
+	return exists
+}
+
 func (m *Manager) Close() {
 	close(m.shutdown)
 

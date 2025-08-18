@@ -302,6 +302,291 @@ SELECT add_continuous_aggregate_policy('daily_trade_summary',
 SELECT add_retention_policy('trades', INTERVAL '1 year');
 SELECT add_retention_policy('system_metrics', INTERVAL '6 months');
 
+-- === PERMISSIONLESS COPY TRADING TABLES ===
+
+-- Permissionless followers table - allows copying any trader without registration
+CREATE TABLE IF NOT EXISTS permissionless_followers (
+    id SERIAL PRIMARY KEY,
+    user_id VARCHAR(255) NOT NULL,
+    target_trader_address VARCHAR(42) NOT NULL,
+    api_wallet_address VARCHAR(42) NOT NULL,
+    copy_percentage NUMERIC(5,4) NOT NULL CHECK (copy_percentage > 0 AND copy_percentage <= 100),
+    max_position_size NUMERIC(20,8) NOT NULL CHECK (max_position_size > 0),
+    min_trade_size NUMERIC(20,8) NOT NULL DEFAULT 0,
+    asset_whitelist TEXT[], -- Array of allowed assets
+    asset_blacklist TEXT[], -- Array of blocked assets
+    auto_discovery_enabled BOOLEAN DEFAULT false,
+    copy_filters JSONB DEFAULT '{}', -- Complex filtering rules
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(user_id, target_trader_address)
+);
+
+-- Copy trades table - records each copy trading execution
+CREATE TABLE IF NOT EXISTS copy_trades (
+    id SERIAL PRIMARY KEY,
+    original_trader_address VARCHAR(42) NOT NULL,
+    follower_id INTEGER NOT NULL REFERENCES permissionless_followers(id),
+    original_trade_hash VARCHAR(100) NOT NULL,
+    asset VARCHAR(20) NOT NULL,
+    side VARCHAR(10) NOT NULL,
+    original_size VARCHAR(50) NOT NULL,
+    copied_size VARCHAR(50) NOT NULL,
+    original_price VARCHAR(50) NOT NULL,
+    executed_price VARCHAR(50),
+    slippage NUMERIC(10,6) DEFAULT 0,
+    delay_ms BIGINT DEFAULT 0, -- Execution delay in milliseconds
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    error_message TEXT,
+    executed_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Convert copy_trades to hypertable for time-series optimization
+SELECT create_hypertable('copy_trades', 'executed_at', if_not_exists => TRUE);
+
+-- Trader discovery table - tracks discovered traders and their performance
+CREATE TABLE IF NOT EXISTS trader_discovery (
+    id SERIAL PRIMARY KEY,
+    address VARCHAR(42) UNIQUE NOT NULL,
+    first_discovered TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    total_volume NUMERIC(20,8) DEFAULT 0,
+    trade_count INTEGER DEFAULT 0,
+    win_rate NUMERIC(5,4) DEFAULT 0,
+    profit_loss NUMERIC(20,8) DEFAULT 0,
+    max_drawdown NUMERIC(10,4) DEFAULT 0,
+    sharpe_ratio NUMERIC(10,6) DEFAULT 0,
+    last_activity TIMESTAMP WITH TIME ZONE,
+    is_active BOOLEAN DEFAULT true,
+    follower_count INTEGER DEFAULT 0,
+    asset_breakdown JSONB DEFAULT '{}', -- Asset allocation breakdown
+    performance_grade VARCHAR(2) DEFAULT 'C', -- A, B, C, D, F
+    risk_level VARCHAR(10) DEFAULT 'medium', -- low, medium, high
+    trading_style VARCHAR(20) DEFAULT 'unknown', -- scalper, swing, position
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Trader recommendations table - AI-powered trader suggestions
+CREATE TABLE IF NOT EXISTS trader_recommendations (
+    id SERIAL PRIMARY KEY,
+    user_id VARCHAR(255) NOT NULL,
+    recommended_trader VARCHAR(42) NOT NULL,
+    recommendation_score NUMERIC(5,4) NOT NULL, -- 0-100 score
+    recommendation_reason TEXT,
+    risk_compatibility NUMERIC(5,4) DEFAULT 0,
+    style_match NUMERIC(5,4) DEFAULT 0,
+    performance_score NUMERIC(5,4) DEFAULT 0,
+    recommended_allocation NUMERIC(5,4) DEFAULT 0,
+    is_viewed BOOLEAN DEFAULT false,
+    is_accepted BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Copy trading strategies table - different copying approaches
+CREATE TABLE IF NOT EXISTS copy_trading_strategies (
+    id SERIAL PRIMARY KEY,
+    user_id VARCHAR(255) NOT NULL,
+    strategy_name VARCHAR(100) NOT NULL,
+    strategy_type VARCHAR(20) NOT NULL, -- mirror, proportional, risk_adjusted
+    target_traders TEXT[] NOT NULL, -- Array of trader addresses
+    allocations JSONB DEFAULT '{}', -- Allocation percentages per trader
+    rebalance_frequency VARCHAR(20) DEFAULT 'daily',
+    max_total_risk NUMERIC(5,4) DEFAULT 100,
+    settings JSONB DEFAULT '{}',
+    is_active BOOLEAN DEFAULT true,
+    performance_stats JSONB DEFAULT '{}',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Smart copy orders table - intelligent order execution
+CREATE TABLE IF NOT EXISTS smart_copy_orders (
+    id SERIAL PRIMARY KEY,
+    follower_id INTEGER NOT NULL REFERENCES permissionless_followers(id),
+    original_trade_hash VARCHAR(100) NOT NULL,
+    asset VARCHAR(20) NOT NULL,
+    side VARCHAR(10) NOT NULL,
+    target_size NUMERIC(20,8) NOT NULL,
+    execution_strategy VARCHAR(20) DEFAULT 'immediate', -- immediate, twap, smart
+    max_slippage NUMERIC(10,6) DEFAULT 0.5,
+    time_limit_seconds INTEGER DEFAULT 300,
+    price_improvement NUMERIC(10,6) DEFAULT 0,
+    partial_executions JSONB DEFAULT '[]',
+    status VARCHAR(20) DEFAULT 'pending',
+    total_executed NUMERIC(20,8) DEFAULT 0,
+    average_price NUMERIC(20,8) DEFAULT 0,
+    total_slippage NUMERIC(10,6) DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    completed_at TIMESTAMP WITH TIME ZONE
+);
+
+-- Trading insights table - AI-driven analytics
+CREATE TABLE IF NOT EXISTS copy_trading_insights (
+    id SERIAL PRIMARY KEY,
+    user_id VARCHAR(255) NOT NULL,
+    analysis_period VARCHAR(20) NOT NULL,
+    total_copied_trades INTEGER DEFAULT 0,
+    successful_trades INTEGER DEFAULT 0,
+    total_return NUMERIC(10,4) DEFAULT 0,
+    best_performing_leader VARCHAR(42),
+    worst_performing_leader VARCHAR(42),
+    optimal_allocations JSONB DEFAULT '{}',
+    risk_adjusted_return NUMERIC(10,4) DEFAULT 0,
+    recommended_actions TEXT[],
+    generated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Indexes for permissionless copy trading tables
+CREATE INDEX IF NOT EXISTS idx_permissionless_followers_trader ON permissionless_followers(target_trader_address);
+CREATE INDEX IF NOT EXISTS idx_permissionless_followers_user ON permissionless_followers(user_id);
+CREATE INDEX IF NOT EXISTS idx_permissionless_followers_active ON permissionless_followers(is_active) WHERE is_active = true;
+
+CREATE INDEX IF NOT EXISTS idx_copy_trades_trader ON copy_trades(original_trader_address);
+CREATE INDEX IF NOT EXISTS idx_copy_trades_follower ON copy_trades(follower_id);
+CREATE INDEX IF NOT EXISTS idx_copy_trades_executed_at ON copy_trades(executed_at DESC);
+CREATE INDEX IF NOT EXISTS idx_copy_trades_status ON copy_trades(status);
+CREATE INDEX IF NOT EXISTS idx_copy_trades_hash ON copy_trades(original_trade_hash);
+
+CREATE INDEX IF NOT EXISTS idx_trader_discovery_address ON trader_discovery(address);
+CREATE INDEX IF NOT EXISTS idx_trader_discovery_active ON trader_discovery(is_active) WHERE is_active = true;
+CREATE INDEX IF NOT EXISTS idx_trader_discovery_performance ON trader_discovery(sharpe_ratio DESC, total_volume DESC);
+CREATE INDEX IF NOT EXISTS idx_trader_discovery_grade ON trader_discovery(performance_grade);
+
+CREATE INDEX IF NOT EXISTS idx_trader_recommendations_user ON trader_recommendations(user_id);
+CREATE INDEX IF NOT EXISTS idx_trader_recommendations_score ON trader_recommendations(recommendation_score DESC);
+CREATE INDEX IF NOT EXISTS idx_trader_recommendations_unviewed ON trader_recommendations(user_id, is_viewed) WHERE is_viewed = false;
+
+CREATE INDEX IF NOT EXISTS idx_copy_strategies_user ON copy_trading_strategies(user_id);
+CREATE INDEX IF NOT EXISTS idx_copy_strategies_active ON copy_trading_strategies(is_active) WHERE is_active = true;
+
+CREATE INDEX IF NOT EXISTS idx_smart_orders_follower ON smart_copy_orders(follower_id);
+CREATE INDEX IF NOT EXISTS idx_smart_orders_status ON smart_copy_orders(status);
+CREATE INDEX IF NOT EXISTS idx_smart_orders_created_at ON smart_copy_orders(created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_insights_user ON copy_trading_insights(user_id);
+CREATE INDEX IF NOT EXISTS idx_insights_generated_at ON copy_trading_insights(generated_at DESC);
+
+-- Triggers for permissionless tables
+CREATE TRIGGER update_permissionless_followers_updated_at 
+    BEFORE UPDATE ON permissionless_followers 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_trader_discovery_updated_at 
+    BEFORE UPDATE ON trader_discovery 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_copy_strategies_updated_at 
+    BEFORE UPDATE ON copy_trading_strategies 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Views for permissionless copy trading
+CREATE OR REPLACE VIEW permissionless_trader_leaderboard AS
+SELECT 
+    td.address,
+    td.total_volume,
+    td.trade_count,
+    td.win_rate,
+    td.profit_loss,
+    td.max_drawdown,
+    td.sharpe_ratio,
+    td.last_activity,
+    td.follower_count,
+    td.performance_grade,
+    td.risk_level,
+    td.trading_style,
+    COALESCE(recent_activity.recent_trades, 0) as trades_last_7d,
+    COALESCE(recent_activity.recent_volume, 0) as volume_last_7d
+FROM trader_discovery td
+LEFT JOIN (
+    SELECT 
+        original_trader_address,
+        COUNT(*) as recent_trades,
+        SUM(CAST(original_size AS NUMERIC) * CAST(original_price AS NUMERIC)) as recent_volume
+    FROM copy_trades 
+    WHERE executed_at >= NOW() - INTERVAL '7 days'
+    GROUP BY original_trader_address
+) recent_activity ON td.address = recent_activity.original_trader_address
+WHERE td.is_active = true
+ORDER BY td.sharpe_ratio DESC, td.total_volume DESC;
+
+-- Continuous aggregates for copy trading analytics
+CREATE MATERIALIZED VIEW IF NOT EXISTS daily_copy_trade_summary
+WITH (timescaledb.continuous) AS
+SELECT 
+    time_bucket('1 day', executed_at) AS day,
+    original_trader_address,
+    COUNT(*) as copy_trade_count,
+    COUNT(DISTINCT follower_id) as unique_followers,
+    SUM(CAST(copied_size AS NUMERIC) * CAST(executed_price AS NUMERIC)) as total_copy_volume,
+    AVG(slippage) as avg_slippage,
+    AVG(delay_ms) as avg_delay_ms,
+    COUNT(CASE WHEN status = 'executed' THEN 1 END) as successful_copies,
+    COUNT(CASE WHEN status = 'failed' THEN 1 END) as failed_copies
+FROM copy_trades
+GROUP BY day, original_trader_address
+WITH NO DATA;
+
+-- Refresh policy for copy trading aggregates
+SELECT add_continuous_aggregate_policy('daily_copy_trade_summary',
+    start_offset => INTERVAL '1 month',
+    end_offset => INTERVAL '1 hour',
+    schedule_interval => INTERVAL '1 hour');
+
+-- Data retention for copy trading tables
+SELECT add_retention_policy('copy_trades', INTERVAL '2 years');
+
+-- Functions for permissionless copy trading
+CREATE OR REPLACE FUNCTION update_trader_follower_count(trader_addr VARCHAR(42))
+RETURNS VOID AS $$
+BEGIN
+    UPDATE trader_discovery SET
+        follower_count = (
+            SELECT COUNT(*) FROM permissionless_followers 
+            WHERE target_trader_address = trader_addr AND is_active = true
+        ),
+        updated_at = NOW()
+    WHERE address = trader_addr;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to calculate trader performance metrics
+CREATE OR REPLACE FUNCTION calculate_trader_performance(trader_addr VARCHAR(42), days_back INTEGER DEFAULT 30)
+RETURNS TABLE (
+    total_trades INTEGER,
+    win_rate NUMERIC,
+    total_volume NUMERIC,
+    profit_loss NUMERIC,
+    sharpe_ratio NUMERIC
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        COUNT(*)::INTEGER as total_trades,
+        COALESCE(
+            (COUNT(CASE WHEN CAST(copied_size AS NUMERIC) * CAST(executed_price AS NUMERIC) > 0 THEN 1 END)::NUMERIC / 
+             NULLIF(COUNT(*)::NUMERIC, 0)) * 100, 0
+        ) as win_rate,
+        COALESCE(SUM(CAST(copied_size AS NUMERIC) * CAST(executed_price AS NUMERIC)), 0) as total_volume,
+        COALESCE(SUM(
+            CASE WHEN side = 'B' THEN -CAST(copied_size AS NUMERIC) * CAST(executed_price AS NUMERIC)
+                 ELSE CAST(copied_size AS NUMERIC) * CAST(executed_price AS NUMERIC)
+            END
+        ), 0) as profit_loss,
+        COALESCE(
+            CASE WHEN STDDEV(CAST(copied_size AS NUMERIC) * CAST(executed_price AS NUMERIC)) > 0 
+                 THEN AVG(CAST(copied_size AS NUMERIC) * CAST(executed_price AS NUMERIC)) / 
+                      STDDEV(CAST(copied_size AS NUMERIC) * CAST(executed_price AS NUMERIC))
+                 ELSE 0 
+            END, 0
+        ) as sharpe_ratio
+    FROM copy_trades
+    WHERE original_trader_address = trader_addr 
+        AND executed_at >= NOW() - (days_back || ' days')::INTERVAL
+        AND status = 'executed';
+END;
+$$ LANGUAGE plpgsql;
+
 -- Security: Row Level Security (if needed)
 -- ALTER TABLE followers ENABLE ROW LEVEL SECURITY;
 -- CREATE POLICY followers_policy ON followers FOR ALL TO authenticated_users USING (user_id = current_setting('app.current_user'));

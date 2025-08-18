@@ -13,12 +13,18 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/joho/godotenv"
+
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Warn().Err(err).Msg("No .env file found or error loading it")
+	}
 	// Initialize logger
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
@@ -45,7 +51,7 @@ func main() {
 
 	// Setup routes
 	router := mux.NewRouter()
-	
+
 	// API routes
 	api := router.PathPrefix("/api/v1").Subrouter()
 	api.HandleFunc("/followers", apiHandler.CreateFollower).Methods("POST")
@@ -57,7 +63,7 @@ func main() {
 	api.HandleFunc("/trades", apiHandler.GetTrades).Methods("GET")
 	api.HandleFunc("/positions", apiHandler.GetPositions).Methods("GET")
 	api.HandleFunc("/analytics/{follower_id}/pnl", apiHandler.GetPnLAnalytics).Methods("GET")
-	
+
 	// Serve static files
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("./frontend/")))
 

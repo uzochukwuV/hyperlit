@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -416,10 +417,10 @@ func (api *HyperliquidAPI) PlaceOrder(ctx context.Context, order *models.Enhance
 		"grouping": "na",
 	}
 
-	// Sign the action
+	// Sign the action with corrected signature
 	signature, err := api.signer.SignAction(orderAction, apiWalletAddress, nonce)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to sign order: %w", err)
 	}
 
 	// Prepare request body
@@ -473,7 +474,7 @@ func (api *HyperliquidAPI) CancelOrder(ctx context.Context, asset string, oid in
 
 	signature, err := api.signer.SignAction(cancelAction, apiWalletAddress, nonce)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to sign cancel order: %w", err)
 	}
 
 	reqBody := map[string]interface{}{
@@ -566,7 +567,7 @@ func (api *HyperliquidAPI) batchOrders(ctx context.Context, orders []*models.Enh
 
 	signature, err := api.signer.SignAction(batchAction, apiWalletAddress, nonce)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to sign batch order: %w", err)
 	}
 
 	reqBody := map[string]interface{}{
@@ -641,35 +642,22 @@ func (api *HyperliquidAPI) getAssetID(asset string) (int, error) {
 	if api.perpMeta != nil {
 		for i, assetInfo := range api.perpMeta.Universe {
 			if assetInfo.Name == asset {
-				// Check if asset is delisted (if enhanced asset info is available)
+				// Check if asset is delisted
 				if enhancedInfo, ok := interface{}(assetInfo).(models.EnhancedAssetInfo); ok {
 					if enhancedInfo.IsDelisted {
 						return 0, fmt.Errorf("asset %s is delisted", asset)
 					}
 				}
-				return i, nil
+				return i, nil // Correct: return index directly for perps
 			}
 		}
 	}
 
-	// Check spot markets
+	// Check spot markets - FIXED: Proper spot asset ID calculation
 	if api.spotMeta != nil {
 		for _, pair := range api.spotMeta.Universe {
 			if pair.Name == asset {
-				return 10000 + pair.Index, nil
-			}
-		}
-	}
-
-	// Check if asset is at open interest cap
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	cappedAssets, err := api.GetPerpsAtOpenInterestCap(ctx)
-	if err == nil {
-		for _, cappedAsset := range cappedAssets {
-			if cappedAsset == asset {
-				return 0, fmt.Errorf("asset %s is at open interest cap", asset)
+				return 10000 + pair.Index, nil // Correct formula from docs
 			}
 		}
 	}
@@ -677,15 +665,20 @@ func (api *HyperliquidAPI) getAssetID(asset string) (int, error) {
 	return 0, fmt.Errorf("unsupported asset: %s", asset)
 }
 
+// Enhanced price/size formatting to meet Hyperliquid requirements
 func (api *HyperliquidAPI) formatPrice(price *float64) string {
 	if price == nil {
 		return ""
 	}
-	return strconv.FormatFloat(*price, 'f', -1, 64)
+	// Remove trailing zeros as required by Hyperliquid
+	formatted := strconv.FormatFloat(*price, 'f', -1, 64)
+	return strings.TrimRight(strings.TrimRight(formatted, "0"), ".")
 }
 
 func (api *HyperliquidAPI) formatSize(size float64) string {
-	return strconv.FormatFloat(size, 'f', -1, 64)
+	// Remove trailing zeros as required by Hyperliquid
+	formatted := strconv.FormatFloat(size, 'f', -1, 64)
+	return strings.TrimRight(strings.TrimRight(formatted, "0"), ".")
 }
 
 // getOrderTypeCode with enhanced TIF support

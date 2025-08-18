@@ -336,3 +336,236 @@ func (db *PostgresDB) GetPositions(ctx context.Context, userAddress string) ([]m
 
 	return positions, nil
 }
+
+// === PERMISSIONLESS COPY TRADING DATABASE METHODS ===
+
+func (db *PostgresDB) CreatePermissionlessFollower(ctx context.Context, follower *models.PermissionlessFollower) error {
+	query := `
+		INSERT INTO permissionless_followers (user_id, target_trader_address, api_wallet_address, 
+			copy_percentage, max_position_size, min_trade_size, asset_whitelist, asset_blacklist,
+			auto_discovery_enabled, copy_filters, is_active)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+		RETURNING id, created_at, updated_at`
+
+	err := db.pool.QueryRow(ctx, query,
+		follower.UserID,
+		follower.TargetTraderAddress,
+		follower.APIWalletAddress,
+		follower.CopyPercentage,
+		follower.MaxPositionSize,
+		follower.MinTradeSize,
+		follower.AssetWhitelist,
+		follower.AssetBlacklist,
+		follower.AutoDiscoveryEnabled,
+		follower.CopyFilters,
+		follower.IsActive,
+	).Scan(&follower.ID, &follower.CreatedAt, &follower.UpdatedAt)
+
+	return err
+}
+
+func (db *PostgresDB) GetPermissionlessFollowersByTrader(ctx context.Context, traderAddress string) ([]*models.PermissionlessFollower, error) {
+	query := `
+		SELECT id, user_id, target_trader_address, api_wallet_address, copy_percentage,
+			max_position_size, min_trade_size, asset_whitelist, asset_blacklist,
+			auto_discovery_enabled, copy_filters, is_active, created_at, updated_at
+		FROM permissionless_followers
+		WHERE target_trader_address = $1 AND is_active = true`
+
+	rows, err := db.pool.Query(ctx, query, traderAddress)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var followers []*models.PermissionlessFollower
+	for rows.Next() {
+		var f models.PermissionlessFollower
+		err := rows.Scan(
+			&f.ID,
+			&f.UserID,
+			&f.TargetTraderAddress,
+			&f.APIWalletAddress,
+			&f.CopyPercentage,
+			&f.MaxPositionSize,
+			&f.MinTradeSize,
+			&f.AssetWhitelist,
+			&f.AssetBlacklist,
+			&f.AutoDiscoveryEnabled,
+			&f.CopyFilters,
+			&f.IsActive,
+			&f.CreatedAt,
+			&f.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		followers = append(followers, &f)
+	}
+
+	return followers, nil
+}
+
+func (db *PostgresDB) CreateCopyTrade(ctx context.Context, copyTrade *models.CopyTrade) error {
+	query := `
+		INSERT INTO copy_trades (original_trader_address, follower_id, original_trade_hash,
+			asset, side, original_size, copied_size, original_price, executed_price,
+			slippage, delay_ms, status, error_message, executed_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+		RETURNING id, created_at`
+
+	err := db.pool.QueryRow(ctx, query,
+		copyTrade.OriginalTraderAddress,
+		copyTrade.FollowerID,
+		copyTrade.OriginalTradeHash,
+		copyTrade.Asset,
+		copyTrade.Side,
+		copyTrade.OriginalSize,
+		copyTrade.CopiedSize,
+		copyTrade.OriginalPrice,
+		copyTrade.ExecutedPrice,
+		copyTrade.Slippage,
+		copyTrade.DelayMs,
+		copyTrade.Status,
+		copyTrade.ErrorMessage,
+		copyTrade.ExecutedAt,
+	).Scan(&copyTrade.ID, &copyTrade.CreatedAt)
+
+	return err
+}
+
+func (db *PostgresDB) GetCopyTradesByFollower(ctx context.Context, followerID int) ([]*models.CopyTrade, error) {
+	query := `
+		SELECT id, original_trader_address, follower_id, original_trade_hash, asset, side,
+			original_size, copied_size, original_price, executed_price, slippage, delay_ms,
+			status, error_message, executed_at, created_at
+		FROM copy_trades
+		WHERE follower_id = $1
+		ORDER BY executed_at DESC`
+
+	rows, err := db.pool.Query(ctx, query, followerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var copyTrades []*models.CopyTrade
+	for rows.Next() {
+		var ct models.CopyTrade
+		err := rows.Scan(
+			&ct.ID,
+			&ct.OriginalTraderAddress,
+			&ct.FollowerID,
+			&ct.OriginalTradeHash,
+			&ct.Asset,
+			&ct.Side,
+			&ct.OriginalSize,
+			&ct.CopiedSize,
+			&ct.OriginalPrice,
+			&ct.ExecutedPrice,
+			&ct.Slippage,
+			&ct.DelayMs,
+			&ct.Status,
+			&ct.ErrorMessage,
+			&ct.ExecutedAt,
+			&ct.CreatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		copyTrades = append(copyTrades, &ct)
+	}
+
+	return copyTrades, nil
+}
+
+func (db *PostgresDB) CreateTraderDiscovery(ctx context.Context, discovery *models.TraderDiscovery) error {
+	query := `
+		INSERT INTO trader_discovery (address, first_discovered, total_volume, trade_count,
+			win_rate, profit_loss, max_drawdown, sharpe_ratio, last_activity, is_active,
+			follower_count, asset_breakdown, performance_grade, risk_level, trading_style)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+		ON CONFLICT (address) DO UPDATE SET
+			total_volume = EXCLUDED.total_volume,
+			trade_count = EXCLUDED.trade_count,
+			win_rate = EXCLUDED.win_rate,
+			profit_loss = EXCLUDED.profit_loss,
+			max_drawdown = EXCLUDED.max_drawdown,
+			sharpe_ratio = EXCLUDED.sharpe_ratio,
+			last_activity = EXCLUDED.last_activity,
+			is_active = EXCLUDED.is_active,
+			follower_count = EXCLUDED.follower_count,
+			asset_breakdown = EXCLUDED.asset_breakdown,
+			performance_grade = EXCLUDED.performance_grade,
+			risk_level = EXCLUDED.risk_level,
+			trading_style = EXCLUDED.trading_style,
+			updated_at = NOW()
+		RETURNING id, updated_at`
+
+	err := db.pool.QueryRow(ctx, query,
+		discovery.Address,
+		discovery.FirstDiscovered,
+		discovery.TotalVolume,
+		discovery.TradeCount,
+		discovery.WinRate,
+		discovery.ProfitLoss,
+		discovery.MaxDrawdown,
+		discovery.SharpeRatio,
+		discovery.LastActivity,
+		discovery.IsActive,
+		discovery.FollowerCount,
+		discovery.AssetBreakdown,
+		discovery.PerformanceGrade,
+		discovery.RiskLevel,
+		discovery.TradingStyle,
+	).Scan(&discovery.ID, &discovery.UpdatedAt)
+
+	return err
+}
+
+func (db *PostgresDB) GetTopTraders(ctx context.Context, limit int) ([]*models.TraderDiscovery, error) {
+	query := `
+		SELECT id, address, first_discovered, total_volume, trade_count, win_rate,
+			profit_loss, max_drawdown, sharpe_ratio, last_activity, is_active,
+			follower_count, asset_breakdown, performance_grade, risk_level, trading_style, updated_at
+		FROM trader_discovery
+		WHERE is_active = true AND trade_count > 10
+		ORDER BY sharpe_ratio DESC, total_volume DESC
+		LIMIT $1`
+
+	rows, err := db.pool.Query(ctx, query, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var traders []*models.TraderDiscovery
+	for rows.Next() {
+		var td models.TraderDiscovery
+		err := rows.Scan(
+			&td.ID,
+			&td.Address,
+			&td.FirstDiscovered,
+			&td.TotalVolume,
+			&td.TradeCount,
+			&td.WinRate,
+			&td.ProfitLoss,
+			&td.MaxDrawdown,
+			&td.SharpeRatio,
+			&td.LastActivity,
+			&td.IsActive,
+			&td.FollowerCount,
+			&td.AssetBreakdown,
+			&td.PerformanceGrade,
+			&td.RiskLevel,
+			&td.TradingStyle,
+			&td.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		traders = append(traders, &td)
+	}
+
+	return traders, nil
+}

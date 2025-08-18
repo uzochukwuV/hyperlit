@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"fmt"
 	"hyperliquid-copy-trading/config"
 	"hyperliquid-copy-trading/internal/models"
 	"net/url"
@@ -94,29 +95,54 @@ func (c *Client) IsConnected() bool {
 	return c.connected
 }
 
-func (c *Client) subscribeToUserEvents() error {
-	subscription := map[string]interface{}{
+// subscribeToLeaderEvents subscribes to all relevant events for copy trading
+func (c *Client) subscribeToLeaderEvents(leaderAddress string) error {
+	// Subscribe to user fills (trades) - Most important for copy trading
+	fillsSubscription := map[string]interface{}{
+		"method": "subscribe",
+		"subscription": map[string]interface{}{
+			"type": "userFills",
+			"user": leaderAddress,
+		},
+	}
+	if err := c.sendMessage(fillsSubscription); err != nil {
+		return fmt.Errorf("failed to subscribe to user fills: %w", err)
+	}
+
+	// Subscribe to order updates to track order lifecycle
+	orderSubscription := map[string]interface{}{
+		"method": "subscribe",
+		"subscription": map[string]interface{}{
+			"type": "orderUpdates", 
+			"user": leaderAddress,
+		},
+	}
+	if err := c.sendMessage(orderSubscription); err != nil {
+		return fmt.Errorf("failed to subscribe to order updates: %w", err)
+	}
+
+	// Subscribe to user events for funding, liquidations, etc.
+	userEventsSubscription := map[string]interface{}{
 		"method": "subscribe",
 		"subscription": map[string]interface{}{
 			"type": "userEvents",
-			"user": c.leaderAddress,
+			"user": leaderAddress,
 		},
 	}
+	if err := c.sendMessage(userEventsSubscription); err != nil {
+		return fmt.Errorf("failed to subscribe to user events: %w", err)
+	}
 
-	return c.sendMessage(subscription)
+	return nil
+}
+
+func (c *Client) subscribeToUserEvents() error {
+	return c.subscribeToLeaderEvents(c.leaderAddress)
 }
 
 func (c *Client) subscribeToTrades() error {
-	// Subscribe to all coin trades to catch leader trades
-	// In production, you might want to be more selective
-	subscription := map[string]interface{}{
-		"method": "subscribe",
-		"subscription": map[string]interface{}{
-			"type": "allTrades",
-		},
-	}
-
-	return c.sendMessage(subscription)
+	// This is now handled by subscribeToLeaderEvents
+	return nil
 }
 
 func (c *Client) sendMessage(msg interface{}) error {
@@ -181,6 +207,10 @@ func (c *Client) processMessage(message map[string]interface{}, tradeChannel cha
 		c.processUserEvents(data, userChannel)
 	case "allTrades":
 		c.processAllTrades(data, tradeChannel)
+	case "userFills":
+		c.processUserFills(data, tradeChannel)
+	case "orderUpdates":
+		c.processOrderUpdates(data, userChannel)
 	}
 }
 
@@ -229,6 +259,93 @@ func (c *Client) processAllTrades(data map[string]interface{}, tradeChannel chan
 				return
 			default:
 				log.Warn().Msg("Trade channel full, dropping trade event")
+			}
+		}
+	}
+}
+
+// Process user fills (the core copy trading data)
+func (c *Client) processUserFills(data map[string]interface{}, tradeChannel chan models.TradeEvent) {
+	// Handle both snapshot and streaming data
+	isSnapshot, _ := data["isSnapshot"].(bool)
+	
+	var fills []interface{}
+	if fillsData, ok := data["fills"].([]interface{}); ok {
+		fills = fillsData
+	}
+
+	for _, fillData := range fills {
+		fill, ok := fillData.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		tradeEvent := c.parseUserFill(fill, isSnapshot)
+		if tradeEvent != nil {
+			select {
+			case tradeChannel <- *tradeEvent:
+			case <-c.shutdown:
+				return
+			default:
+				log.Warn().Msg("Trade channel full, dropping trade event")
+			}
+		}
+	}
+}
+
+func (c *Client) parseUserFill(fill map[string]interface{}, isSnapshot bool) *models.TradeEvent {
+	event := &models.TradeEvent{}
+
+	// Parse essential fields for copy trading
+	if coin, ok := fill["coin"].(string); ok {
+		event.Coin = coin
+	}
+	if side, ok := fill["side"].(string); ok {
+		event.Side = side
+	}
+	if px, ok := fill["px"].(string); ok {
+		event.Px = px
+	}
+	if sz, ok := fill["sz"].(string); ok {
+		event.Sz = sz
+	}
+	if timeFloat, ok := fill["time"].(float64); ok {
+		event.Time = int64(timeFloat)
+	}
+	if hash, ok := fill["hash"].(string); ok {
+		event.Hash = hash
+	}
+
+	// Additional copy trading relevant fields
+	if startPos, ok := fill["startPosition"].(string); ok {
+		event.StartPos = startPos
+	}
+	if closedPnl, ok := fill["closedPnl"].(string); ok {
+		// Store in a custom field or extend the model
+		event.User = closedPnl // Temporarily using User field
+	}
+
+	event.User = c.leaderAddress
+	return event
+}
+
+func (c *Client) processOrderUpdates(data map[string]interface{}, userChannel chan models.UserEvent) {
+	// Process order updates for order lifecycle tracking
+	if orders, ok := data["orders"].([]interface{}); ok {
+		for _, orderData := range orders {
+			if order, ok := orderData.(map[string]interface{}); ok {
+				userEvent := models.UserEvent{
+					Type: "orderUpdate",
+					Data: order,
+				}
+
+				select {
+				case userChannel <- userEvent:
+				case <-c.shutdown:
+					return
+				default:
+					log.Warn().Msg("User channel full, dropping order update")
+				}
 			}
 		}
 	}
