@@ -18,6 +18,7 @@
     "@heroicons/react": "^2.1.5",
     "wagmi": "^2.7.11",
     "@rainbow-me/rainbowkit": "^1.0.2",
+    "@hlnames/rainbowkit": "^1.0.0",
     "ethers": "^6.8.1",
     "@alchemy/sdk": "^2.13.0",
     "@alchemy/wagmi": "^0.3.3"
