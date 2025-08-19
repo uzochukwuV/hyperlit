@@ -1,8 +1,22 @@
 import Layout from '../../components/Layout'
 import { BanknotesIcon, ChartBarIcon, UserGroupIcon, ArrowTrendingUpIcon } from '@heroicons/react/24/solid'
 import ChartPlaceholder from '../../components/ChartPlaceholder'
+import type { VaultSummary } from '../../types/models'
 
-const stats = [
+// Example: using VaultSummary for a dashboard summary (not strictly needed for stats, but shown for demonstration)
+const vaultSummaries: VaultSummary[] = [
+  { name: "Growth Vault", apr: 12.7, aum: "$82,500" },
+  { name: "Stable Vault", apr: 7.3, aum: "$41,200" },
+]
+
+type StatCard = {
+  title: string
+  value: string
+  icon: React.ReactNode
+  change: string
+}
+
+const stats: StatCard[] = [
   {
     title: "Total Equity",
     value: "$18,250",

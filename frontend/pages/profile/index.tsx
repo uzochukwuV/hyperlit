@@ -1,11 +1,15 @@
 import Layout from '../../components/Layout'
 import { useState } from 'react'
+import type { ProfileUser } from '../../types/models'
 
 export default function Profile() {
-  // Placeholder wallet address for demonstration
-  const walletAddress = '0x8f3a...d9B2'
-  const [displayName, setDisplayName] = useState('TraderJoe')
-  const [email, setEmail] = useState('traderjoe@email.com')
+  // Placeholder user object for demonstration
+  const [user, setUser] = useState<ProfileUser>({
+    user_id: 'u1',
+    address: '0x8f3a...d9B2',
+    name: 'TraderJoe',
+    email: 'traderjoe@email.com'
+  })
   const [submitted, setSubmitted] = useState(false)
 
   function handleSubmit(e: React.FormEvent) {
@@ -28,7 +32,7 @@ export default function Profile() {
             </label>
             <input
               className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-gray-700 cursor-not-allowed"
-              value={walletAddress}
+              value={user.address}
               readOnly
             />
           </div>
@@ -38,8 +42,8 @@ export default function Profile() {
             </label>
             <input
               className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-gray-900 focus:outline-none focus:border-primary"
-              value={displayName}
-              onChange={e => setDisplayName(e.target.value)}
+              value={user.name}
+              onChange={e => setUser(u => ({ ...u, name: e.target.value }))}
               required
               maxLength={32}
             />
@@ -51,8 +55,8 @@ export default function Profile() {
             <input
               type="email"
               className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-gray-900 focus:outline-none focus:border-primary"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
+              value={user.email || ''}
+              onChange={e => setUser(u => ({ ...u, email: e.target.value }))}
               required
             />
           </div>

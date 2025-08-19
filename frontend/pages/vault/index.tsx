@@ -1,7 +1,8 @@
 import Layout from '../../components/Layout'
 import { LockClosedIcon } from '@heroicons/react/24/solid'
+import type { VaultSummary } from '../../types/models'
 
-const vaults = [
+const vaults: VaultSummary[] = [
   {
     name: "Growth Vault",
     apr: 12.7,
@@ -25,9 +26,9 @@ export default function Vault() {
       <section className="container mx-auto py-8">
         <h2 className="text-3xl font-bold mb-8">Vaults</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {vaults.map((vault, idx) => (
+          {vaults.map((vault) => (
             <div
-              key={idx}
+              key={vault.name}
               className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl transition-shadow duration-200 p-6 flex flex-col"
             >
               <div className="flex items-center gap-3 mb-2">
