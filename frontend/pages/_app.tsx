@@ -1,12 +1,13 @@
 import type { AppProps } from 'next/app'
 import '../styles/globals.css'
 
-import '@rainbow-me/rainbowkit/styles.css';
+import '@hlnames/rainbowkit/styles.css';
 import {
   getDefaultWallets,
   RainbowKitProvider,
   lightTheme,
-} from '@rainbow-me/rainbowkit';
+  connectorsForWallets
+} from '@hlnames/rainbowkit';
 import { configureChains, createConfig, WagmiConfig } from 'wagmi';
 import {
   mainnet,
@@ -77,7 +78,7 @@ const { chains, publicClient } = configureChains(
 );
 
 // --- Set up connectors, including Alchemy SmartWalletConnector ---
-import { connectorsForWallets } from '@rainbow-me/rainbowkit';
+// connectorsForWallets is now imported from @hlnames/rainbowkit above
 
 const smartWalletConnector = new SmartWalletConnector({
   chains,
