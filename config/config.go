@@ -75,7 +75,7 @@ func Load() *Config {
 		MaxWebSocketMessages:    getEnvInt("MAX_WEBSOCKET_MESSAGES", 2000),      // Hyperliquid limit
 
 		APIWalletPrivateKeys: map[string]string{
-			"default": getEnv("API_WALLET_PRIVATE_KEY", "1600713d0409917ef4204de9cd5adc4124f36f5f3833cf2f3966035b8697b121"),
+			"default": getEnv("API_WALLET_PRIVATE_KEY", ""),
 		},
 		SignatureChainID: getEnvInt64("SIGNATURE_CHAIN_ID", 42161), // Arbitrum
 	}
