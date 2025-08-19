@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -15,7 +16,7 @@ export default function Navbar() {
 
   return (
     <nav className="bg-white shadow-sm sticky top-0 z-20">
-      <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+      <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-6">
         <Link href="/" className="text-2xl font-bold text-primary">
           Hyperlit
         </Link>
@@ -30,17 +31,20 @@ export default function Navbar() {
             </Link>
           ))}
         </div>
-        <button
-          className="md:hidden"
-          onClick={() => setMenuOpen((open) => !open)}
-          aria-label="Toggle menu"
-        >
-          {menuOpen ? (
-            <XMarkIcon className="w-7 h-7 text-primary" />
-          ) : (
-            <Bars3Icon className="w-7 h-7 text-primary" />
-          )}
-        </button>
+        <div className="flex items-center gap-3">
+          <ConnectButton showBalance={false} />
+          <button
+            className="md:hidden"
+            onClick={() => setMenuOpen((open) => !open)}
+            aria-label="Toggle menu"
+          >
+            {menuOpen ? (
+              <XMarkIcon className="w-7 h-7 text-primary" />
+            ) : (
+              <Bars3Icon className="w-7 h-7 text-primary" />
+            )}
+          </button>
+        </div>
       </div>
       {/* Mobile menu */}
       {menuOpen && (

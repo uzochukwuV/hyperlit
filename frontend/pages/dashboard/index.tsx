@@ -4,6 +4,7 @@ import ChartPlaceholder from '../../components/ChartPlaceholder'
 import { useApi } from '../../hooks/useApi'
 import { ENDPOINTS } from '../../utils/endpoints'
 import type { TraderSummary } from '../../types/models'
+import ProtectedRoute from '../../components/ProtectedRoute'
 
 interface PortfolioSummary {
   total_equity: number;
@@ -11,7 +12,7 @@ interface PortfolioSummary {
   positions: { id: string }[]; // minimal for counting open positions
 }
 
-export default function Dashboard() {
+function DashboardInner() {
   // Get portfolio summary and traders
   const { data: portfolio, loading: loadingPortfolio, error: errorPortfolio } = useApi<PortfolioSummary>(ENDPOINTS.PORTFOLIO)
   const { data: traders, loading: loadingTraders, error: errorTraders } = useApi<TraderSummary[]>(ENDPOINTS.TRADERS)
@@ -48,38 +49,46 @@ export default function Dashboard() {
   ]
 
   return (
+    <section className="container mx-auto py-8">
+      <h2 className="text-3xl font-bold mb-8">Dashboard</h2>
+      {loading && (
+        <div className="flex justify-center items-center py-16"><Spinner /></div>
+      )}
+      {error && (
+        <div className="flex justify-center items-center py-8 text-red-600 font-semibold">
+          Failed to load dashboard data. Please try again.
+        </div>
+      )}
+      {!loading && !error && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          {stats.map((s, i) => (
+            <div
+              key={i}
+              className="bg-white rounded-2xl shadow-sm p-6 flex flex-col items-start border border-gray-100 hover:shadow-lg transition duration-200"
+            >
+              <div className="mb-3">{s.icon}</div>
+              <div className="text-xl font-bold text-gray-900 mb-1">{s.value}</div>
+              <div className="text-gray-500 mb-2">{s.title}</div>
+              {/* For demo, show ChartPlaceholder for P&L only if not loading/error */}
+              {s.title === "P&L" && (
+                <div className="w-full mt-4">
+                  {loadingPortfolio ? <div className="flex justify-center"><Spinner /></div> : <ChartPlaceholder />}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  )
+}
+
+export default function Dashboard() {
+  return (
     <Layout>
-      <section className="container mx-auto py-8">
-        <h2 className="text-3xl font-bold mb-8">Dashboard</h2>
-        {loading && (
-          <div className="flex justify-center items-center py-16"><Spinner /></div>
-        )}
-        {error && (
-          <div className="flex justify-center items-center py-8 text-red-600 font-semibold">
-            Failed to load dashboard data. Please try again.
-          </div>
-        )}
-        {!loading && !error && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            {stats.map((s, i) => (
-              <div
-                key={i}
-                className="bg-white rounded-2xl shadow-sm p-6 flex flex-col items-start border border-gray-100 hover:shadow-lg transition duration-200"
-              >
-                <div className="mb-3">{s.icon}</div>
-                <div className="text-xl font-bold text-gray-900 mb-1">{s.value}</div>
-                <div className="text-gray-500 mb-2">{s.title}</div>
-                {/* For demo, show ChartPlaceholder for P&L only if not loading/error */}
-                {s.title === "P&L" && (
-                  <div className="w-full mt-4">
-                    {loadingPortfolio ? <div className="flex justify-center"><Spinner /></div> : <ChartPlaceholder />}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+      <ProtectedRoute>
+        <DashboardInner />
+      </ProtectedRoute>
     </Layout>
   )
 }
